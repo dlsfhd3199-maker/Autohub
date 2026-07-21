@@ -1,65 +1,57 @@
-import Image from "next/image";
+const foundationItems = [
+  "Next.js App Router · TypeScript",
+  "환경변수 스키마 검증",
+  "Vitest · Playwright 테스트 기반",
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="app-shell">
+      <aside className="sidebar" aria-label="주 내비게이션">
+        <div className="brand-lockup">
+          <span className="brand-mark" aria-hidden="true">A</span>
+          <span><strong>AEO Hub</strong><small>콘텐츠 운영 플랫폼</small></span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <nav>
+          <a className="nav-item active" href="#foundation">프로젝트 기반</a>
+          <span className="nav-item disabled">브랜드 관리</span>
+          <span className="nav-item disabled">콘텐츠</span>
+          <span className="nav-item disabled">설정</span>
+        </nav>
+        <p className="phase-note">체크포인트 1 · 로컬 기반 구축</p>
+      </aside>
+
+      <section className="workspace" id="foundation">
+        <header className="topbar">
+          <span><small>AGENCY WORKSPACE</small><strong>프로젝트 기반</strong></span>
+          <span className="status-pill">로컬 환경</span>
+        </header>
+
+        <div className="content-area">
+          <p className="eyebrow">PHASE 1 FOUNDATION</p>
+          <h1>콘텐츠 운영의 기반을 준비했습니다.</h1>
+          <p className="lead">브랜드 격리, 권한, 콘텐츠 버전 관리를 안전하게 구현하기 위한 개발 환경입니다.</p>
+
+          <div className="foundation-grid">
+            {foundationItems.map((item, index) => (
+              <article className="foundation-card" key={item}>
+                <span className="card-index">0{index + 1}</span>
+                <h2>{item}</h2>
+                <p>다음 체크포인트에서 실제 데이터와 권한 모듈을 연결합니다.</p>
+              </article>
+            ))}
+          </div>
+
+          <section className="scope-card" aria-labelledby="scope-title">
+            <div><p className="eyebrow">CURRENT SCOPE</p><h2 id="scope-title">외부 서비스 없이 로컬에서 검증 가능</h2></div>
+            <ul>
+              <li>실제 계정·브랜드·비밀키 없음</li>
+              <li>Supabase와 Vercel 원격 프로젝트 미연결</li>
+              <li>기능 개발은 작업 브랜치에서만 진행</li>
+            </ul>
+          </section>
         </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
