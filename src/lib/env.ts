@@ -24,3 +24,12 @@ export function parsePublicEnv(input: Record<string, string | undefined>) {
 export function parseServerEnv(input: Record<string, string | undefined>) {
   return serverEnvSchema.parse(input);
 }
+
+export function getPublicEnv() {
+  return parsePublicEnv({
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  });
+}

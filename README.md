@@ -49,3 +49,18 @@ pnpm install --package-import-method=copy --virtual-store-dir=.pnpm-virtual
 ```
 
 외부 Supabase 또는 Vercel 프로젝트는 아직 연결하지 않습니다.
+
+## 로컬 Supabase
+
+체크포인트 2부터 PostgreSQL 스키마와 RLS 정책은 `supabase/migrations`에서 관리합니다. Docker Desktop이 실행 중인 환경에서 다음 명령을 사용합니다.
+
+```bash
+pnpm db:start
+pnpm db:reset
+pnpm db:test
+pnpm db:lint
+```
+
+`db:reset`은 로컬 Supabase 데이터베이스만 초기화합니다. 원격 프로젝트에는 적용하지 않습니다.
+
+현재 인증 환경변수는 Supabase 공식 publishable key 형식을 사용합니다. `SUPABASE_SERVICE_ROLE_KEY`와 secret key는 일반 애플리케이션 요청에 사용하지 않습니다.
