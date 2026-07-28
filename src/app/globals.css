@@ -94,7 +94,7 @@ dt { color: var(--muted); font-size: 12px; } dd { margin: 0; font-size: 13px; fo
 .people-list li { padding: 10px; display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 10px; }
 .person-avatar { width: 34px; height: 34px; border-radius: 50%; }
 .people-list li > span:last-child { display: grid; gap: 3px; } .people-list small { color: var(--muted); }
-.filter-bar { margin-bottom: 16px; padding: 12px; display: grid; grid-template-columns: 1fr 180px 160px auto; gap: 9px; border: 1px solid var(--line); border-radius: 14px; background: white; }
+.filter-bar { margin-bottom: 16px; padding: 12px; display: grid; grid-template-columns: minmax(220px, 1fr) 160px 150px 160px auto; gap: 9px; border: 1px solid var(--line); border-radius: 14px; background: white; }
 .panel-title { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
 .panel-title span { color: var(--muted); font-size: 12px; }
 .content-list article { padding: 18px 8px; display: grid; grid-template-columns: 110px 1fr 120px 150px; gap: 16px; align-items: center; border-bottom: 1px solid var(--line); }

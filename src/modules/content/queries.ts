@@ -27,3 +27,17 @@ export async function listAccessibleContent(search: Search) {
   if (error) throw error;
   return { items: data ?? [], total: count ?? 0, page: search.page, pageSize: search.pageSize, pageCount: Math.max(1, Math.ceil((count ?? 0) / search.pageSize)) };
 }
+
+export async function listAccessibleContentOwners() {
+  const { supabase } = await requireAuthenticatedUser();
+  const { data, error } = await supabase.from("content_items")
+    .select("owner_id,profiles!content_items_owner_id_fkey(id,display_name),brands!inner(archived_at)")
+    .is("archived_at", null).is("brands.archived_at", null);
+  if (error) throw error;
+  const owners = new Map<string, string>();
+  for (const row of data ?? []) {
+    const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+    if (profile) owners.set(profile.id, profile.display_name);
+  }
+  return [...owners].map(([id, name]) => ({ id, name }));
+}

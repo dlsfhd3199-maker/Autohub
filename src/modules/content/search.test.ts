@@ -3,7 +3,7 @@ import { paginationRange, parseContentSearch } from "./search";
 
 describe("content search", () => {
   it("normalizes filters and pagination", () => {
-    expect(parseContentSearch({ q: "  Virtual Paw ", status: "draft", page: "2", pageSize: "20" })).toMatchObject({ q: "Virtual Paw", status: "draft", page: 2, pageSize: 20 });
+    expect(parseContentSearch({ q: "  Virtual Paw ", status: "draft", ownerId: "12000000-0000-4000-8000-000000000002", page: "2", pageSize: "20" })).toMatchObject({ q: "Virtual Paw", status: "draft", ownerId: "12000000-0000-4000-8000-000000000002", page: 2, pageSize: 20 });
     expect(paginationRange(2, 20)).toEqual({ from: 20, to: 39 });
   });
   it("falls back to safe pagination values", () => {
