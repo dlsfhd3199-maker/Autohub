@@ -1,7 +1,12 @@
 import { z } from "zod";
 
+const secureOrLocalUrl = z.url().refine((value) => {
+  const url = new URL(value);
+  return url.protocol === "https:" || (url.protocol === "http:" && ["localhost", "127.0.0.1", "::1"].includes(url.hostname));
+}, "HTTPS 또는 로컬 루프백 URL만 허용됩니다.");
+
 const publicEnvSchema = z.object({
-  NEXT_PUBLIC_SUPABASE_URL: z.url().startsWith("https://"),
+  NEXT_PUBLIC_SUPABASE_URL: secureOrLocalUrl,
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z
     .string()
     .min(1)

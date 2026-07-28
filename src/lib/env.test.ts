@@ -22,6 +22,11 @@ describe("environment validation", () => {
     ).toThrow();
   });
 
+  it("allows HTTP only for local Supabase development", () => {
+    expect(parsePublicEnv({ ...publicValues, NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321" }).NEXT_PUBLIC_SUPABASE_URL).toBe("http://127.0.0.1:54321");
+    expect(() => parsePublicEnv({ ...publicValues, NEXT_PUBLIC_SUPABASE_URL: "http://remote.example.com" })).toThrow();
+  });
+
   it("requires a PostgreSQL server connection", () => {
     expect(() => parseServerEnv(publicValues)).toThrow();
   });

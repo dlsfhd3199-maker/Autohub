@@ -22,11 +22,13 @@ describe("brand-scoped authorization", () => {
   });
 
   it("limits an AE to assigned brands", () => {
+    expect(canManageBrand(context("ae"))).toBe(false);
     expect(canEditContent(context("ae"), alphaBrand)).toBe(true);
     expect(canEditContent(context("ae"), betaBrand)).toBe(false);
   });
 
   it("allows an advertiser to read but not edit its assigned brand", () => {
+    expect(canManageBrand(context("advertiser"))).toBe(false);
     expect(canReadContent(context("advertiser"), alphaBrand)).toBe(true);
     expect(canEditContent(context("advertiser"), alphaBrand)).toBe(false);
     expect(canReadContent(context("advertiser"), betaBrand)).toBe(false);
