@@ -1,10 +1,12 @@
 @import "tailwindcss";
 
-:root { --navy: #0b1733; --cobalt: #2f5bea; --ink: #0d1b36; --muted: #66728c; --line: #dce3ef; --surface: #fff; --canvas: #f3f6fb; }
+:root { --navy: #0b1733; --cobalt: #2f5bea; --ink: #0d1b36; --muted: #59657c; --line: #dce3ef; --surface: #fff; --canvas: #f3f6fb; }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--canvas); color: var(--ink); }
 body { font-family: Arial, "Noto Sans KR", sans-serif; }
 a { color: inherit; text-decoration: none; }
+button, input, select, textarea, summary, a { touch-action: manipulation; }
+:focus-visible { outline: 3px solid #ffbf47; outline-offset: 3px; }
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 248px 1fr; }
 .sidebar { position: sticky; top: 0; min-height: 100vh; padding: 24px 14px; display: flex; flex-direction: column; color: #dfe8ff; background: var(--navy); }
 .brand-lockup { padding: 0 10px 24px; display: flex; gap: 12px; align-items: center; border-bottom: 1px solid rgb(255 255 255 / 10%); }
@@ -67,7 +69,7 @@ a { color: inherit; text-decoration: none; }
 .brand-card-head { display: flex; justify-content: space-between; align-items: center; }
 .brand-avatar, .person-avatar { display: grid; place-items: center; color: white; background: var(--cobalt); font-weight: 800; }
 .brand-avatar { width: 46px; height: 46px; border-radius: 12px; }
-.healthy-pill { padding: 5px 9px; border-radius: 20px; color: #268341; background: #edf8ef; font-size: 11px; }
+.healthy-pill { padding: 5px 9px; border-radius: 20px; color: #1f7135; background: #edf8ef; font-size: 11px; }
 .brand-card h2 { margin: 20px 0 5px; }
 .brand-card > p, .helper, .empty-copy { color: var(--muted); font-size: 13px; }
 .brand-card dl, .detail-panel dl { display: grid; gap: 9px; margin: 20px 0; }
@@ -135,3 +137,5 @@ dt { color: var(--muted); font-size: 12px; } dd { margin: 0; font-size: 13px; fo
 .diff-card { margin-top: 14px; padding: 12px; border-radius: 9px; background: #eef3ff; font-size: 12px; }
 @media (max-width: 900px) { .studio-layout { grid-template-columns: 1fr; } .version-sidebar { position: static; max-height: none; } }
 @media (max-width: 600px) { .studio-fields { grid-template-columns: 1fr; } .studio-toolbar { align-items: flex-start; flex-direction: column; } .block-editor header { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 360px) { .workspace-content { width: calc(100% - 20px); } .studio-main, .version-sidebar, .panel { padding: 14px; } .block-editor header span { max-width: 100%; flex-wrap: wrap; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }

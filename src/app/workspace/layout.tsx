@@ -2,6 +2,9 @@ import Link from "next/link";
 import { signOut } from "@/modules/auth/actions";
 import { getWorkspaceContext } from "@/modules/auth/workspace";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const roleLabel = { agency_admin: "관리자", ae: "AE", advertiser: "광고주" } as const;
 
 export default async function WorkspaceLayout({ children }: { children: React.ReactNode }) {
