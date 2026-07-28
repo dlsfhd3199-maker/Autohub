@@ -253,12 +253,14 @@ declare
   scoped_brand_id uuid;
   scoped_organization_id uuid;
   scoped_entity_id uuid;
+  scoped_row jsonb;
 begin
+  scoped_row := case when tg_op = 'DELETE' then to_jsonb(old) else to_jsonb(new) end;
+  scoped_entity_id := (scoped_row ->> 'id')::uuid;
   scoped_brand_id := case
-    when tg_table_name = 'brands' then coalesce(new.id, old.id)
-    else coalesce(new.brand_id, old.brand_id)
+    when tg_table_name = 'brands' then scoped_entity_id
+    else (scoped_row ->> 'brand_id')::uuid
   end;
-  scoped_entity_id := coalesce(new.id, old.id);
 
   select b.agency_organization_id into scoped_organization_id
   from public.brands b where b.id = scoped_brand_id;
