@@ -22,9 +22,9 @@ jobs:
           version: 11.17.0
       - uses: actions/setup-node@v5
         with:
-          node-version: 24.4.1
+          node-version: 24.18.0
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --package-import-method=copy --child-concurrency=2 --network-concurrency=16
       - run: pnpm security:scan
       - run: pnpm security:audit
       - run: pnpm typecheck
@@ -42,9 +42,9 @@ jobs:
           version: 11.17.0
       - uses: actions/setup-node@v5
         with:
-          node-version: 24.4.1
+          node-version: 24.18.0
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --package-import-method=copy --child-concurrency=2 --network-concurrency=16
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm db:start
       - run: pnpm db:reset
