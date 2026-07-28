@@ -2,7 +2,7 @@
 
 ## 요구 환경과 실행
 
-- Node.js 24.x, pnpm 11.9.0
+- Node.js 24.4.1, pnpm 11.17.0
 - Docker Desktop Linux Engine와 Windows 사용 시 WSL 2
 - 저장소에 고정된 Supabase CLI 2.109.1
 
