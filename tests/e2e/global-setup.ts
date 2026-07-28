@@ -38,4 +38,9 @@ export default async function setup() {
   if (assignmentError) throw assignmentError;
   const { error: contentError } = await admin.from("content_items").upsert([{ id: "42000000-0000-4000-8000-000000000001", brand_id: lumiId, title: "Virtual Lumi Search Guide", slug: "virtual-lumi-search-guide", status: "draft", owner_id: created.ae }, { id: "42000000-0000-4000-8000-000000000002", brand_id: bridgeId, title: "Virtual Bridge Private Guide", slug: "virtual-bridge-private-guide", status: "approved", owner_id: created.admin }]);
   if (contentError) throw contentError;
+  const draftId = "52000000-0000-4000-8000-000000000001";
+  const { error: draftError } = await admin.from("content_versions").upsert({ id: draftId, brand_id: lumiId, content_id: "42000000-0000-4000-8000-000000000001", version_no: 1, status: "draft", body_json: { schemaVersion: 1, blocks: [{ id: "62000000-0000-4000-8000-000000000001", type: "paragraph", text: "Virtual saved studio paragraph" }], metadata: { primaryKeyword: "virtual search", keywords: [], description: "" } }, created_by: created.ae, is_working_draft: true, title_snapshot: "Virtual Lumi Search Guide", document_schema_version: 1 }, { onConflict: "id" });
+  if (draftError) throw draftError;
+  const { error: linkError } = await admin.from("content_items").update({ current_draft_id: draftId, primary_keyword: "virtual search" }).eq("id", "42000000-0000-4000-8000-000000000001");
+  if (linkError) throw linkError;
 }

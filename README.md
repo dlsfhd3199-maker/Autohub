@@ -58,6 +58,14 @@ pnpm test:e2e
 
 Playwright 브라우저가 없다면 최초 1회 `pnpm exec playwright install chromium`이 필요합니다.
 
+## 체크포인트 4: 콘텐츠 스튜디오
+
+`/workspace/content/[contentId]/studio`에서 구조화된 JSON 블록을 편집합니다. 문서는 `schemaVersion`, `blocks`, `metadata`로 구성되며 HTML은 편집 원본으로 저장하지 않습니다. 관리자와 배정된 AE만 편집할 수 있고 광고주는 읽기 전용입니다.
+
+편집 내용은 변경 후 5초에 현재 working draft로 자동 저장됩니다. 저장 요청은 마지막으로 읽은 `revision`을 포함하며, 서버는 동일 revision인 경우에만 갱신하고 성공 시 값을 증가시킵니다. 다른 탭이나 사용자가 먼저 저장했다면 409 충돌 화면에서 서버 최신본을 다시 불러오거나 내 편집본을 유지·복사할 수 있습니다.
+
+명시적 버전 생성은 자동 저장과 별개입니다. 현재 draft를 수정 불가능한 이력으로 확정하고 새 working draft를 만듭니다. 이전 버전은 읽기·비교할 수 있으며, 선택한 이력을 기반으로 편집할 때도 새 draft가 생성됩니다. 승인 버전을 포함한 확정 이력은 DB 트리거가 UPDATE와 DELETE를 차단합니다.
+
 ## OneDrive 설치 참고
 
 OneDrive 동기화 폴더에서 pnpm 링크 생성 오류가 발생하면 다음 복사 모드를 사용합니다.

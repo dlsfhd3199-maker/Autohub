@@ -56,4 +56,53 @@ test.describe.serial("checkpoint 3 role workflows", () => {
     await expect(page.getByText("Virtual Lumi Search Guide")).toBeVisible();
     await expect(page.getByText("Virtual Bridge Private Guide")).toHaveCount(0);
   });
+
+  test("studio autosaves blocks, creates versions, and detects tab conflicts", async ({ page, context }) => {
+    await login(page, e2eAccounts.admin);
+    await page.goto("/workspace/content");
+    await page.getByText("+ 새 콘텐츠").click();
+    const slug = `virtual-studio-${Date.now()}`;
+    const createForm = page.locator(".create-panel form");
+    await createForm.locator('select[name="brandId"]').selectOption({ label: "Virtual Lumi" });
+    await createForm.locator('input[name="title"]').fill("Virtual Studio E2E Guide");
+    await createForm.locator('input[name="slug"]').fill(slug);
+    await createForm.locator('input[name="primaryKeyword"]').fill("virtual studio keyword");
+    await createForm.getByRole("button", { name: "콘텐츠 생성" }).click();
+    await expect(page).toHaveURL(/\/studio$/);
+    await page.getByRole("button", { name: "FAQ" }).click();
+    await page.getByLabel("FAQ 항목").fill("가상 질문 | 가상 답변");
+    await page.getByLabel("일반 문단 내용").fill("자동 저장된 가상 문단");
+    await page.getByRole("button", { name: "위로 이동" }).last().click();
+    await expect(page.getByText("저장 대기")).toBeVisible();
+    await expect(page.getByText("저장 완료")).toBeVisible({ timeout: 9000 });
+    await page.reload();
+    await expect(page.getByLabel("FAQ 항목")).toHaveValue("가상 질문 | 가상 답변");
+    await page.getByLabel("변경 요약").fill("가상 첫 버전");
+    await page.getByRole("button", { name: "새 버전 생성" }).click();
+    await expect(page.getByText("v1 · draft")).toBeVisible();
+    await expect(page.getByText(/추가 \d+ · 삭제 \d+ · 변경 \d+/)).toBeVisible();
+
+    const second = await context.newPage();
+    await second.goto(page.url());
+    await page.getByLabel("제목", { exact: true }).fill("Virtual Studio First Tab");
+    await expect(page.getByText("저장 대기")).toBeVisible();
+    await expect(page.getByText("저장 완료")).toBeVisible({ timeout: 9000 });
+    await second.getByLabel("제목", { exact: true }).fill("Virtual Studio Second Tab");
+    await expect(second.getByText("충돌 발생")).toBeVisible({ timeout: 9000 });
+    await expect(second.getByRole("button", { name: "최신본 다시 불러오기" })).toBeVisible();
+    await expect(second.getByRole("button", { name: "내 편집본 유지" })).toBeVisible();
+    await second.close();
+  });
+
+  test("advertiser studio is read only and mobile editor remains usable", async ({ page }) => {
+    await login(page, e2eAccounts.advertiser);
+    await page.goto("/workspace/content/42000000-0000-4000-8000-000000000001/studio");
+    await expect(page.getByText("광고주는 콘텐츠와 버전 이력을 읽을 수 있지만 편집할 수 없습니다.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "새 버전 생성" })).toHaveCount(0);
+    await page.getByRole("button", { name: "로그아웃" }).click();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await login(page, e2eAccounts.ae);
+    await page.goto("/workspace/content/42000000-0000-4000-8000-000000000001/studio");
+    await expect(page.getByLabel("일반 문단 내용")).toBeVisible();
+  });
 });
