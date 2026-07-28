@@ -37,10 +37,10 @@ insert into public.content_items (id, brand_id, title, slug, owner_id) values
   ('40000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000002', 'Virtual Beta Content', 'virtual-beta-content', '10000000-0000-0000-0000-000000000001'),
   ('40000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003', 'Virtual Gamma Content', 'virtual-gamma-content', '10000000-0000-0000-0000-000000000001');
 
-insert into public.content_versions (id, brand_id, content_id, version_no, status, change_summary, created_by) values
-  ('50000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 1, 'approved', 'Approved fixture', '10000000-0000-0000-0000-000000000002'),
-  ('50000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 2, 'draft', 'Draft fixture', '10000000-0000-0000-0000-000000000002'),
-  ('50000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000002', 1, 'draft', 'Other brand fixture', '10000000-0000-0000-0000-000000000001');
+insert into public.content_versions (id, brand_id, content_id, version_no, status, change_summary, created_by, is_working_draft, title_snapshot) values
+  ('50000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 1, 'approved', 'Approved fixture', '10000000-0000-0000-0000-000000000002', false, 'Approved fixture'),
+  ('50000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 2, 'draft', 'Draft fixture', '10000000-0000-0000-0000-000000000002', true, 'Draft fixture'),
+  ('50000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000002', 1, 'draft', 'Other brand fixture', '10000000-0000-0000-0000-000000000001', true, 'Other brand fixture');
 
 select throws_ok(
   $$insert into public.content_versions (id, brand_id, content_id, version_no, status, created_by) values ('50000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000002', 3, 'draft', '10000000-0000-0000-0000-000000000001')$$,
@@ -51,13 +51,13 @@ select throws_ok(
 select throws_ok(
   $$update public.content_versions set change_summary = 'Forbidden privileged update' where id = '50000000-0000-0000-0000-000000000001'$$,
   '55000',
-  'Approved content versions are immutable',
+  'Immutable content versions cannot be changed',
   'approved version update is blocked by database trigger'
 );
 select throws_ok(
   $$delete from public.content_versions where id = '50000000-0000-0000-0000-000000000001'$$,
   '55000',
-  'Approved content versions are immutable',
+  'Immutable content versions cannot be changed',
   'approved version delete is blocked by database trigger'
 );
 select is((select count(*) from auth.users where email !~ '^[^@]+@([^.]+\.)*example\.com$'), 0::bigint, 'all fixture email addresses use example.com');
