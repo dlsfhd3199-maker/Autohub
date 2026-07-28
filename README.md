@@ -28,6 +28,24 @@ pnpm dev
 
 `SUPABASE_SERVICE_ROLE_KEY`는 일반 요청에 사용하지 않으며 현재 환경변수 목록에도 포함하지 않습니다.
 
+## 체크포인트 3: 브랜드 운영
+
+`/workspace/brands`, `/workspace/people`, `/workspace/content`는 로그인 세션과 PostgreSQL RLS를 기본 경계로 사용합니다. 상세 조회와 변경은 서버의 `requireBrandPermission` 또는 `requireOrganizationAdmin`을 추가로 통과해야 합니다. 클라이언트가 제출한 조직·브랜드 ID는 현재 세션의 멤버십 및 DB 정책으로 다시 검증합니다.
+
+브랜드 삭제는 제공하지 않습니다. 관리자가 보관하면 `archived_at`이 기록되고 일반 브랜드·콘텐츠 목록에서 제외됩니다. 신규 이메일 초대와 조직 멤버십 제거 기능은 아직 제공하지 않으므로 마지막 관리자 제거도 애플리케이션 요청으로 수행할 수 없습니다.
+
+로컬 E2E 테스트는 실행 중인 Supabase CLI에서 테스트용 키를 메모리로 읽어 명백한 가상 계정과 픽스처를 준비합니다. 이 관리 키는 Next.js 서버 환경, `.env` 파일, 일반 사용자 요청 또는 Git에 전달하지 않습니다.
+
+```bash
+pnpm db:start
+pnpm db:reset
+pnpm db:test
+pnpm test:e2e
+pnpm db:stop
+```
+
+현재 모델에서는 새 브랜드를 기존에 대행사와 연결된 광고주 조직에만 생성할 수 있습니다. 최초 광고주 조직 연결 및 이메일 초대는 후속 초대 모듈에서 명시적인 대행사-광고주 관계와 함께 구현합니다.
+
 ## 검증 명령
 
 ```bash
