@@ -13,6 +13,8 @@
 
 # testing
 /coverage
+/playwright-report/
+/test-results/
 
 # next.js
 /.next/
@@ -31,11 +33,16 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (the documented example is intentionally committed)
 .env*
+!.env.example
 
 # vercel
 .vercel
+
+# supabase local runtime state
+/supabase/.branches/
+/supabase/.temp/
 
 # typescript
 *.tsbuildinfo
