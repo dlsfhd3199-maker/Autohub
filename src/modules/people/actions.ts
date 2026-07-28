@@ -15,8 +15,8 @@ export async function assignPerson(_state: ActionState, formData: FormData): Pro
     const { error } = await supabase.from("brand_assignments").insert({ brand_id: input.brandId, user_id: input.userId, role: input.role });
     if (error) throw error;
     revalidatePath("/workspace/people");
-    return { ok: true, message: "담당자를 배정했습니다." };
-  } catch { return { ok: false, message: "조직과 역할이 일치하는 담당자만 배정할 수 있습니다." }; }
+    return { ok: true, message: "담당자를 브랜드에 배정했습니다." };
+  } catch { return { ok: false, message: "배정하지 못했습니다. 같은 조직의 유효한 AE 또는 광고주 담당자인지 확인해 주세요." }; }
 }
 
 export async function unassignPerson(_state: ActionState, formData: FormData): Promise<ActionState> {
@@ -28,5 +28,5 @@ export async function unassignPerson(_state: ActionState, formData: FormData): P
     if (error) throw error;
     revalidatePath("/workspace/people");
     return { ok: true, message: "담당자 배정을 해제했습니다." };
-  } catch { return { ok: false, message: "배정을 해제할 권한이 없습니다." }; }
+  } catch { return { ok: false, message: "배정을 해제할 수 없습니다. 권한과 필수 담당자 조건을 확인해 주세요." }; }
 }

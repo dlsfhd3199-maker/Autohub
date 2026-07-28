@@ -12,4 +12,9 @@ describe("brand input validation", () => {
     ["invalid publishing path", { ...valid, publishingPath: "blog" }],
     ["invalid key", { ...valid, brandKey: "Virtual Lumi" }],
   ])("rejects %s", (_label, input) => expect(() => brandInputSchema.parse(input)).toThrow());
+  it("returns a field-specific Korean brand key error", () => {
+    const result = brandInputSchema.safeParse({ ...valid, brandKey: "Virtual_Key" });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.flatten().fieldErrors.brandKey?.[0]).toContain("영문 소문자");
+  });
 });

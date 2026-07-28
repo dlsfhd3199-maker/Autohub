@@ -5,8 +5,15 @@ import { z } from "zod";
 import { requireBrandPermission, requireOrganizationAdmin } from "@/modules/authorization/server";
 import { brandArchiveSchema, brandInputSchema, brandUpdateSchema } from "@/modules/brands/schemas";
 
-export type ActionState = { ok: boolean; message: string };
-const failure = (error: unknown): ActionState => ({ ok: false, message: error instanceof z.ZodError ? "입력값을 다시 확인해 주세요." : "요청을 처리하지 못했습니다." });
+export type BrandField = "name" | "brandKey" | "domain" | "publishingPath" | "advertiserOrganizationId";
+export type ActionState = { ok: boolean; message: string; fieldErrors?: Partial<Record<BrandField, string[]>>; createdBrandId?: string };
+const failure = (error: unknown): ActionState => {
+  if (error instanceof z.ZodError) {
+    const flattened = z.flattenError(error).fieldErrors as Partial<Record<BrandField, string[]>>;
+    return { ok: false, message: "표시된 항목을 확인해 주세요.", fieldErrors: flattened };
+  }
+  return { ok: false, message: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." };
+};
 
 export async function createBrand(_state: ActionState, formData: FormData): Promise<ActionState> {
   try {
@@ -14,10 +21,20 @@ export async function createBrand(_state: ActionState, formData: FormData): Prom
     const { supabase, organizationId } = await requireOrganizationAdmin(input.organizationId);
     const { count } = await supabase.from("brands").select("id", { count: "exact", head: true }).eq("agency_organization_id", organizationId).eq("advertiser_organization_id", input.advertiserOrganizationId);
     if (!count) throw new Error("Advertiser organization is outside the agency scope");
+    const { data: duplicate, error: duplicateError } = await supabase.from("brands").select("brand_key,domain").eq("agency_organization_id", organizationId).or(`brand_key.eq.${input.brandKey},domain.eq.${input.domain}`);
+    if (duplicateError) throw duplicateError;
+    const fieldErrors: ActionState["fieldErrors"] = {};
+    if (duplicate?.some((brand) => brand.brand_key === input.brandKey)) fieldErrors.brandKey = ["이미 사용 중인 브랜드 키입니다."];
+    if (duplicate?.some((brand) => brand.domain === input.domain)) fieldErrors.domain = ["이미 등록된 연결 도메인입니다."];
+    if (Object.keys(fieldErrors).length) return { ok: false, message: "중복된 정보를 확인해 주세요.", fieldErrors };
     const { error } = await supabase.from("brands").insert({ agency_organization_id: organizationId, advertiser_organization_id: input.advertiserOrganizationId, name: input.name, brand_key: input.brandKey, domain: input.domain, publishing_path: input.publishingPath });
-    if (error) throw error;
+    if (error) {
+      if (error.code === "23505") return { ok: false, message: "중복된 정보를 확인해 주세요.", fieldErrors: { brandKey: ["이미 사용 중인 브랜드 키입니다."] } };
+      throw error;
+    }
+    const { data: created } = await supabase.from("brands").select("id").eq("agency_organization_id", organizationId).eq("brand_key", input.brandKey).single();
     revalidatePath("/workspace/brands");
-    return { ok: true, message: "브랜드를 생성했습니다." };
+    return { ok: true, message: "브랜드를 생성했습니다.", createdBrandId: created?.id };
   } catch (error) { return failure(error); }
 }
 

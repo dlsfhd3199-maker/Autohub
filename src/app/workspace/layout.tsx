@@ -1,30 +1,12 @@
-import Link from "next/link";
-import { signOut } from "@/modules/auth/actions";
+import { WorkspaceShell } from "@/components/workspace-shell";
 import { getWorkspaceContext } from "@/modules/auth/workspace";
+import { listAccessibleBrands } from "@/modules/brands/queries";
+import { countAccessibleContent } from "@/modules/content/queries";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const roleLabel = { agency_admin: "관리자", ae: "AE", advertiser: "광고주" } as const;
-
 export default async function WorkspaceLayout({ children }: { children: React.ReactNode }) {
-  const context = await getWorkspaceContext();
-  return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand-lockup"><span className="brand-mark">A</span><span><strong>AEO Hub</strong><small>콘텐츠 인텔리전스 플랫폼</small></span></div>
-        <div className="workspace-identity"><small>AGENCY WORKSPACE</small><strong>{context.organizationName}</strong></div>
-        <nav aria-label="주요 메뉴">
-          <Link className="nav-item" href="/workspace/brands">◇ 브랜드 관리</Link>
-          <Link className="nav-item" href="/workspace/people">◎ 담당자 및 배정</Link>
-          <Link className="nav-item" href="/workspace/content">▤ 콘텐츠</Link>
-        </nav>
-        <div className="phase-note">체크포인트 3<br />브랜드·담당자·콘텐츠 목록</div>
-      </aside>
-      <div className="workspace">
-        <header className="topbar"><span><small>AGENCY WORKSPACE</small><strong>{context.organizationName}</strong></span><span className="user-summary"><span>{context.displayName}</span><small>{roleLabel[context.role]}</small><form action={signOut}><button className="link-button" type="submit">로그아웃</button></form></span></header>
-        {children}
-      </div>
-    </div>
-  );
+  const [context, brands, contents] = await Promise.all([getWorkspaceContext(), listAccessibleBrands(), countAccessibleContent()]);
+  return <WorkspaceShell context={{ displayName: context.displayName, role: context.role, organizationName: context.organizationName }} counts={{ brands: brands.length, contents }}>{children}</WorkspaceShell>;
 }

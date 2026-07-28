@@ -30,3 +30,22 @@ export async function listAdvertiserOrganizations(organizationId: string) {
   }
   return [...unique].map(([id, name]) => ({ id, name }));
 }
+
+export async function listBrandOperations(brandIds: string[]) {
+  if (!brandIds.length) return new Map<string, { contentCount: number; aeNames: string[]; advertiserNames: string[] }>();
+  const { supabase } = await requireAuthenticatedUser();
+  const [{ data: contents, error: contentError }, { data: assignments, error: assignmentError }] = await Promise.all([
+    supabase.from("content_items").select("brand_id").in("brand_id", brandIds).is("archived_at", null),
+    supabase.from("brand_assignments").select("brand_id,role,profiles!brand_assignments_user_id_fkey(display_name)").in("brand_id", brandIds),
+  ]);
+  if (contentError || assignmentError) throw contentError ?? assignmentError;
+  const result = new Map(brandIds.map((id) => [id, { contentCount: 0, aeNames: [] as string[], advertiserNames: [] as string[] }]));
+  for (const row of contents ?? []) result.get(row.brand_id)!.contentCount += 1;
+  for (const row of assignments ?? []) {
+    const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+    if (!profile) continue;
+    const target = result.get(row.brand_id)!;
+    (row.role === "ae" ? target.aeNames : target.advertiserNames).push(profile.display_name);
+  }
+  return result;
+}
