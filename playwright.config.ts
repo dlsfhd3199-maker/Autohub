@@ -4,8 +4,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 function localSupabaseEnv(): Record<string, string> {
   try {
-    const command = path.join(process.cwd(), "node_modules", ".bin", "supabase.CMD");
-    const output = execFileSync(command, ["status", "-o", "env"], { encoding: "utf8", shell: true, stdio: ["ignore", "pipe", "ignore"] });
+    const command = path.join(process.cwd(), "node_modules", "supabase", "dist", "supabase.js");
+    const output = execFileSync(process.execPath, [command, "status", "-o", "env"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
     const values: Record<string, string> = {};
     for (const line of output.split(/\r?\n/)) {
       const separator = line.indexOf("=");
@@ -26,7 +26,7 @@ Object.assign(process.env, testEnv);
 const webEnv = Object.fromEntries(Object.entries(testEnv).filter(([key, value]) => key !== "E2E_SUPABASE_SERVICE_ROLE_KEY" && typeof value === "string")) as Record<string, string>;
 
 export default defineConfig({
-  testDir: "./tests/e2e", fullyParallel: false, forbidOnly: Boolean(process.env.CI), retries: process.env.CI ? 2 : 0,
+  testDir: "./tests/e2e", fullyParallel: false, workers: 1, forbidOnly: Boolean(process.env.CI), retries: process.env.CI ? 2 : 0,
   reporter: "html", globalSetup: "./tests/e2e/global-setup.ts",
   use: { baseURL: "http://127.0.0.1:3000", trace: "on-first-retry" },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],

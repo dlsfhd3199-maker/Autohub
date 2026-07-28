@@ -36,6 +36,8 @@ export default async function setup() {
   if (brandError) throw brandError;
   const { error: assignmentError } = await admin.from("brand_assignments").upsert([{ brand_id: lumiId, user_id: created.advertiser, role: "advertiser" }], { onConflict: "brand_id,user_id,role" });
   if (assignmentError) throw assignmentError;
+  const { error: cleanAeAssignmentError } = await admin.from("brand_assignments").delete().eq("brand_id", lumiId).eq("user_id", created.ae).eq("role", "ae");
+  if (cleanAeAssignmentError) throw cleanAeAssignmentError;
   const { error: contentError } = await admin.from("content_items").upsert([{ id: "42000000-0000-4000-8000-000000000001", brand_id: lumiId, title: "Virtual Lumi Search Guide", slug: "virtual-lumi-search-guide", status: "draft", owner_id: created.ae }, { id: "42000000-0000-4000-8000-000000000002", brand_id: bridgeId, title: "Virtual Bridge Private Guide", slug: "virtual-bridge-private-guide", status: "approved", owner_id: created.admin }]);
   if (contentError) throw contentError;
   const draftId = "52000000-0000-4000-8000-000000000001";

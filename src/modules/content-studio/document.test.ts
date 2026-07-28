@@ -17,6 +17,12 @@ describe("content document schema", () => {
     expect(() => contentDocumentSchema.parse({ ...initialDocument(), blocks: [{ ...newBlock("paragraph"), text: "x".repeat(510_000) }] })).toThrow();
     expect(() => contentDocumentSchema.parse({ ...initialDocument(), blocks: [{ ...newBlock("bulletList"), items: Array.from({ length: 31 }, () => "item") }] })).toThrow();
   });
+  it("validates a near-limit structured document without blocking the event loop excessively", () => {
+    const document = { ...initialDocument(), blocks: Array.from({ length: 40 }, () => ({ ...newBlock("paragraph"), text: "x".repeat(11_000) })) };
+    const startedAt = performance.now();
+    expect(contentDocumentSchema.parse(document).blocks).toHaveLength(40);
+    expect(performance.now() - startedAt).toBeLessThan(250);
+  });
 });
 
 describe("autosave decisions", () => {

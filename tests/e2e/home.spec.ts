@@ -13,14 +13,16 @@ test.describe.serial("checkpoint 3 role workflows", () => {
   test("admin creates and updates a virtual brand", async ({ page }) => {
     await login(page, e2eAccounts.admin);
     await page.getByText("+ 새 브랜드").click();
-    await page.getByLabel("브랜드명").fill("Virtual Paw");
-    await page.getByLabel("브랜드 키").fill("virtual-paw-e2e");
-    await page.getByLabel("가상 도메인").fill("paw-e2e.example.com");
+    const suffix = Date.now();
+    const brandName = `Virtual Paw ${suffix}`;
+    await page.getByLabel("브랜드명").fill(brandName);
+    await page.getByLabel("브랜드 키").fill(`virtual-paw-${suffix}`);
+    await page.getByLabel("가상 도메인").fill(`paw-${suffix}.example.com`);
     await page.getByLabel("광고주 조직").selectOption({ label: "Virtual Advertiser" });
     await page.getByRole("button", { name: "브랜드 생성" }).click();
-    await expect(page.getByText("Virtual Paw")).toBeVisible();
-    await page.getByText("Virtual Paw").locator("..").getByRole("link", { name: "상세 보기" }).click();
-    await page.getByLabel("브랜드명").fill("Virtual Paw Updated");
+    await expect(page.getByText(brandName, { exact: true })).toBeVisible();
+    await page.getByText(brandName, { exact: true }).locator("..").getByRole("link", { name: "상세 보기" }).click();
+    await page.getByLabel("브랜드명").fill(`${brandName} Updated`);
     await page.getByRole("button", { name: "수정 저장" }).click();
     await expect(page.getByText("브랜드 정보를 수정했습니다.")).toBeVisible();
   });
@@ -69,11 +71,14 @@ test.describe.serial("checkpoint 3 role workflows", () => {
     await createForm.locator('input[name="primaryKeyword"]').fill("virtual studio keyword");
     await createForm.getByRole("button", { name: "콘텐츠 생성" }).click();
     await expect(page).toHaveURL(/\/studio$/);
+    const firstSave = page.waitForResponse((response) => response.url().includes("/draft") && response.request().method() === "PATCH");
     await page.getByRole("button", { name: "FAQ" }).click();
     await page.getByLabel("FAQ 항목").fill("가상 질문 | 가상 답변");
     await page.getByLabel("일반 문단 내용").fill("자동 저장된 가상 문단");
     await page.getByRole("button", { name: "위로 이동" }).last().click();
     await expect(page.getByText("저장 대기")).toBeVisible();
+    const firstSaveResponse = await firstSave;
+    expect(firstSaveResponse.status(), await firstSaveResponse.text()).toBe(200);
     await expect(page.getByText("저장 완료")).toBeVisible({ timeout: 9000 });
     await page.reload();
     await expect(page.getByLabel("FAQ 항목")).toHaveValue("가상 질문 | 가상 답변");
@@ -84,8 +89,11 @@ test.describe.serial("checkpoint 3 role workflows", () => {
 
     const second = await context.newPage();
     await second.goto(page.url());
+    const tabSave = page.waitForResponse((response) => response.url().includes("/draft") && response.request().method() === "PATCH");
     await page.getByLabel("제목", { exact: true }).fill("Virtual Studio First Tab");
     await expect(page.getByText("저장 대기")).toBeVisible();
+    const tabSaveResponse = await tabSave;
+    expect(tabSaveResponse.status(), await tabSaveResponse.text()).toBe(200);
     await expect(page.getByText("저장 완료")).toBeVisible({ timeout: 9000 });
     await second.getByLabel("제목", { exact: true }).fill("Virtual Studio Second Tab");
     await expect(second.getByText("충돌 발생")).toBeVisible({ timeout: 9000 });
