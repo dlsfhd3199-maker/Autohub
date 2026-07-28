@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createUuidV4 } from "@/modules/content-studio/uuid";
 
 const id = z.string().uuid();
 const text = (max: number) => z.string().trim().min(1).max(max);
@@ -34,7 +35,7 @@ export type ContentBlock = ContentDocument["blocks"][number];
 export const AUTOSAVE_DELAY_MS = 5000;
 
 export function newBlock(type: ContentBlock["type"]): ContentBlock {
-  const id = globalThis.crypto.randomUUID();
+  const id = createUuidV4();
   switch (type) {
     case "section": return { id, type, heading: "새 섹션", body: "내용을 입력하세요." };
     case "bulletList": case "numberedList": return { id, type, items: ["새 항목"] };

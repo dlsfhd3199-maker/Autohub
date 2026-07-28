@@ -278,7 +278,10 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #c74b4b 
 .inline-success { max-width: 180px; color: var(--success); font-size: 10px; text-align: right; }
 .people-filter { margin-bottom: 12px; display: grid; grid-template-columns: 1fr 130px auto; gap: 7px; }
 .people-list li { padding: 11px; }
-.people-list li > span:nth-child(2) { flex: 1; }
+.directory-person-copy { min-width: 0; display: grid; flex: 1; gap: 6px; }
+.directory-person-copy > strong { line-height: 1.35; }
+.directory-person-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.assignment-state { color: var(--muted); font-size: 11px; }
 .assigned-badge { display: inline-flex; align-items: center; gap: 3px; color: var(--success); font-size: 10px; font-weight: 700; }
 .assigned-badge .icon { width: 14px; }
 .empty-inline { min-height: 140px; display: grid; place-items: center; align-content: center; color: var(--muted); }

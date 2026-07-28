@@ -38,6 +38,11 @@ test.describe.serial("phase one role and UI workflows", () => {
   test("admin assigns an AE and AE sees only assigned brands", async ({ page }) => {
     await login(page, e2eAccounts.admin);
     await page.goto("/workspace/people?brandId=32000000-0000-4000-8000-000000000001");
+    const directory = page.locator(".directory-panel");
+    const aeDirectoryRow = directory.getByRole("listitem").filter({ hasText: "담당자 A" });
+    await expect(aeDirectoryRow.locator("strong")).toContainText("담당자 A");
+    await expect(aeDirectoryRow.getByLabel("역할: AE")).toBeVisible();
+    await expect(aeDirectoryRow.getByLabel(/배정 상태: 현재 브랜드 (미배정|배정됨)/)).toBeVisible();
     await page.getByLabel("미배정 구성원").selectOption({ label: "담당자 A · AE" });
     await page.getByRole("button", { name: "브랜드에 배정" }).click();
     await expect(page.getByText("담당자를 브랜드에 배정했습니다.")).toBeVisible();
