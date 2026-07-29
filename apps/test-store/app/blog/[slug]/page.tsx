@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ContentDocument } from "../../../components/content-document";
+import { ContentHubFailure } from "../../../components/content-hub-state";
 import { ContentHubError, getPublishedDetail, getPublishedList, storeBaseUrl } from "../../../lib/content-hub";
 
 export const revalidate = 60;
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function DetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   let data;
-  try { data = await getPublishedDetail(slug); } catch (error) { if (error instanceof ContentHubError && error.code === "not_found") notFound(); throw error; }
+  try { data = await getPublishedDetail(slug); } catch (error) { if (error instanceof ContentHubError && error.code === "not_found") notFound(); return <ContentHubFailure error={error} />; }
   if (!data.item) notFound();
   const item = data.item;
   const faqBlock = item.document.blocks.find((block) => block.type === "faq") as { items?: Array<{ question?: string; answer?: string }> } | undefined;

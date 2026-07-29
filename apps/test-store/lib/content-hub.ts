@@ -11,7 +11,7 @@ export type PublishedItem = z.infer<typeof itemSchema>;
 export type ContentBlock = PublishedItem["document"]["blocks"][number] & Record<string, unknown>;
 
 export class ContentHubError extends Error {
-  constructor(public readonly status: number, public readonly code: "not_configured" | "connection_disabled" | "not_found" | "unavailable" | "invalid_response") { super(code); }
+  constructor(public readonly status: number, public readonly code: "not_configured" | "unauthorized" | "forbidden" | "not_found" | "timeout" | "unavailable" | "invalid_response") { super(code); }
 }
 
 function config() {
@@ -29,9 +29,14 @@ async function hubFetch(path: string) {
     response = await fetch(`${value.apiUrl}/api/publishing/v1/brands/${encodeURIComponent(value.brandKey)}${path}`, {
       headers: { Authorization: `Bearer ${value.publishingKey}` },
       cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
     });
-  } catch { throw new ContentHubError(503, "unavailable"); }
-  if (response.status === 401) throw new ContentHubError(503, "connection_disabled");
+  } catch (error) {
+    if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) throw new ContentHubError(504, "timeout");
+    throw new ContentHubError(503, "unavailable");
+  }
+  if (response.status === 401) throw new ContentHubError(401, "unauthorized");
+  if (response.status === 403) throw new ContentHubError(403, "forbidden");
   if (response.status === 404) throw new ContentHubError(404, "not_found");
   if (!response.ok) throw new ContentHubError(503, "unavailable");
   return response.json();

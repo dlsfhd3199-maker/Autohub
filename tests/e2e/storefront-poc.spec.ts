@@ -109,3 +109,28 @@ test("@a11y test storefront list and mobile detail have no serious axe violation
   results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""))).toEqual([]);
 });
+
+test("storefront is complete SSR with JavaScript disabled and keeps bearer credentials server-only", async ({ browser, request }) => {
+  const response = await request.get("http://127.0.0.1:3100/blog");
+  const html = await response.text();
+  expect(response.status()).toBe(200);
+  expect(html).toContain("Virtual Lumi");
+  expect(html).not.toContain("Switched to client rendering");
+  expect(html).not.toContain("CONTENT_HUB_PUBLISHING_KEY");
+  expect(html).not.toContain("Authorization: Bearer");
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto("http://127.0.0.1:3100/blog");
+  const firstLink = page.locator(".content-card h2 a").first();
+  await expect(firstLink).toHaveAttribute("href", /\/blog\//);
+  const href = await firstLink.getAttribute("href");
+  expect(href).toBeTruthy();
+  const detailResponse = await request.get(`http://127.0.0.1:3100${href}`);
+  const detailHtml = await detailResponse.text();
+  expect(detailResponse.status()).toBe(200);
+  expect(detailHtml).toContain("<article");
+  expect(detailHtml).toContain('application/ld+json');
+  expect(detailHtml).toContain('"@type":"Article"');
+  expect(detailHtml).toContain('"@type":"BreadcrumbList"');
+  await context.close();
+});

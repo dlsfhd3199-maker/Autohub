@@ -11,6 +11,8 @@ const local = Object.fromEntries(status.split(/\r?\n/).flatMap((line) => {
   return separator > 0 ? [[line.slice(0, separator), line.slice(separator + 1).trim().replace(/^[\"']|[\"']$/g, "")]] : [];
 }));
 if (!local.API_URL || !local.PUBLISHABLE_KEY) throw new Error("Local Supabase must be running before Playwright tests");
+if (local.API_URL !== "http://127.0.0.1:54321") throw new Error("E2E database reset is restricted to loopback local Supabase");
+execFileSync(process.execPath, [supabaseCli, "db", "reset"], { stdio: "inherit" });
 const env = {
   ...process.env,
   NEXT_PUBLIC_SUPABASE_URL: local.API_URL,

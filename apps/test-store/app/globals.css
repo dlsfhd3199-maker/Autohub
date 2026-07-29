@@ -61,6 +61,7 @@ th { background:#f5f7fb; }
 .error-state span { color:#a85a00; font-weight:800; }
 .error-state p,.empty-state p { max-width:600px; color:var(--muted); }
 .error-state button { padding:10px 16px; border:0; border-radius:8px; color:white; background:var(--blue); font-weight:800; }
+.retry-link { padding:10px 16px; border-radius:8px; color:white; background:var(--blue); font-weight:800; text-decoration:none; }
 footer { padding:34px 0; color:#c4cee2; background:var(--navy); }
 footer > div { width:min(1120px,calc(100% - 40px)); margin:auto; }
 footer p { margin:4px 0 0; font-size:12px; }

@@ -14,15 +14,28 @@ function anonymousClient() {
   return createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
 }
 
+export class PublishingConnectionDisabledError extends Error {}
+
+async function verifyConnection(client: ReturnType<typeof anonymousClient>, brandKey: string, bearerKey: string) {
+  const { data, error } = await client.rpc("get_test_publishing_connection_status", { target_brand_key: brandKey, supplied_bearer_hash: hashPublishingKey(bearerKey) });
+  if (error) throw new Error("Publishing query failed");
+  if (data === "disabled") throw new PublishingConnectionDisabledError("Test publishing connection disabled");
+  return data === "active";
+}
+
 export async function fetchPublishedList(brandKey: string, bearerKey: string) {
-  const { data, error } = await anonymousClient().rpc("get_test_published_content_list", { target_brand_key: brandKey, supplied_bearer_hash: hashPublishingKey(bearerKey) });
+  const client = anonymousClient();
+  if (!(await verifyConnection(client, brandKey, bearerKey))) return null;
+  const { data, error } = await client.rpc("get_test_published_content_list", { target_brand_key: brandKey, supplied_bearer_hash: hashPublishingKey(bearerKey) });
   if (error) throw new Error("Publishing query failed");
   if (!data) return null;
   return publishedListSchema.parse(data);
 }
 
 export async function fetchPublishedDetail(brandKey: string, slug: string, bearerKey: string) {
-  const { data, error } = await anonymousClient().rpc("get_test_published_content_detail", { target_brand_key: brandKey, target_slug: slug, supplied_bearer_hash: hashPublishingKey(bearerKey) });
+  const client = anonymousClient();
+  if (!(await verifyConnection(client, brandKey, bearerKey))) return null;
+  const { data, error } = await client.rpc("get_test_published_content_detail", { target_brand_key: brandKey, target_slug: slug, supplied_bearer_hash: hashPublishingKey(bearerKey) });
   if (error) throw new Error("Publishing query failed");
   if (!data) return null;
   return publishedDetailSchema.parse(data);

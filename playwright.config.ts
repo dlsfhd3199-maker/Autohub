@@ -30,7 +30,7 @@ const storeEnv = { ...Object.fromEntries(Object.entries(process.env).filter(([, 
 
 export default defineConfig({
   testDir: "./tests/e2e", fullyParallel: false, workers: 1, forbidOnly: Boolean(process.env.CI), retries: process.env.CI ? 2 : 0,
-  reporter: "html", globalSetup: "./tests/e2e/global-setup.ts",
+  reporter: "html", globalSetup: "./tests/e2e/global-setup.ts", globalTeardown: "./tests/e2e/global-teardown.ts",
   use: { baseURL: "http://127.0.0.1:3000", trace: "on-first-retry" },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [

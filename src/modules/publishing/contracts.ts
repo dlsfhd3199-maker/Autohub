@@ -14,4 +14,4 @@ export const publishedDetailSchema = z.object({ brand: publishedBrandSchema, ite
 export type PublishedList = z.infer<typeof publishedListSchema>;
 export type PublishedDetail = z.infer<typeof publishedDetailSchema>;
 
-export const publishingErrorSchema = z.object({ error: z.object({ code: z.enum(["UNAUTHORIZED", "NOT_FOUND", "INVALID_REQUEST", "INTERNAL_ERROR"]), message: z.string() }).strict() }).strict();
+export const publishingErrorSchema = z.object({ error: z.object({ code: z.enum(["UNAUTHORIZED", "CONNECTION_DISABLED", "NOT_FOUND", "INVALID_REQUEST", "INTERNAL_ERROR"]), message: z.string() }).strict() }).strict();

@@ -1,5 +1,5 @@
 import { brandKeySchema } from "@/modules/publishing/contracts";
-import { fetchPublishedList, parseBearerHeader } from "@/modules/publishing/api";
+import { fetchPublishedList, parseBearerHeader, PublishingConnectionDisabledError } from "@/modules/publishing/api";
 import { errorResponse, publishedResponse } from "@/modules/publishing/responses";
 
 export async function GET(request: Request, { params }: { params: Promise<{ brandKey: string }> }) {
@@ -12,7 +12,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ bran
     if (!result) return errorResponse(401, "UNAUTHORIZED", "유효한 테스트 발행 연결이 필요합니다.");
     const lastModified = result.items[0]?.updatedAt ?? new Date(0).toISOString();
     return publishedResponse(request, result, lastModified);
-  } catch {
+  } catch (error) {
+    if (error instanceof PublishingConnectionDisabledError) return errorResponse(403, "CONNECTION_DISABLED", "테스트 발행 연결이 비활성화되어 있습니다.");
     return errorResponse(500, "INTERNAL_ERROR", "테스트 발행 콘텐츠를 불러오지 못했습니다.");
   }
 }

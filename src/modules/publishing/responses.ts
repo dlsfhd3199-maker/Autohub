@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 const cacheControl = "private, max-age=0, must-revalidate";
 
-export function errorResponse(status: 400 | 401 | 404 | 500, code: "UNAUTHORIZED" | "NOT_FOUND" | "INVALID_REQUEST" | "INTERNAL_ERROR", message: string) {
+export function errorResponse(status: 400 | 401 | 403 | 404 | 500, code: "UNAUTHORIZED" | "CONNECTION_DISABLED" | "NOT_FOUND" | "INVALID_REQUEST" | "INTERNAL_ERROR", message: string) {
   return NextResponse.json({ error: { code, message } }, { status, headers: { "Cache-Control": "no-store", "WWW-Authenticate": status === 401 ? 'Bearer realm="AEO Content Hub test publishing"' : "" } });
 }
 
