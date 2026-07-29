@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "node:crypto";
 
 export const e2eAccounts = {
   admin: { email: "cp3-admin@example.com", password: "Virtual-Test-Only-42!" },
@@ -40,10 +41,23 @@ export default async function setup() {
   if (cleanAeAssignmentError) throw cleanAeAssignmentError;
   const { error: contentError } = await admin.from("content_items").upsert([{ id: "42000000-0000-4000-8000-000000000001", brand_id: lumiId, title: "Virtual Lumi Search Guide", slug: "virtual-lumi-search-guide", status: "draft", owner_id: created.ae }, { id: "42000000-0000-4000-8000-000000000002", brand_id: bridgeId, title: "Virtual Bridge Private Guide", slug: "virtual-bridge-private-guide", status: "approved", owner_id: created.admin }]);
   if (contentError) throw contentError;
-  const draftId = "52000000-0000-4000-8000-000000000001";
-  const { error: draftError } = await admin.from("content_versions").upsert({ id: draftId, brand_id: lumiId, content_id: "42000000-0000-4000-8000-000000000001", version_no: 1, status: "draft", body_json: { schemaVersion: 1, blocks: [{ id: "62000000-0000-4000-8000-000000000001", type: "paragraph", text: "Virtual saved studio paragraph" }], metadata: { primaryKeyword: "virtual search", keywords: [], description: "" } }, created_by: created.ae, is_working_draft: true, title_snapshot: "Virtual Lumi Search Guide", document_schema_version: 1 }, { onConflict: "id" });
-  if (draftError) throw draftError;
-  const { error: linkError } = await admin.from("content_items").update({ current_draft_id: draftId, primary_keyword: "virtual search" }).eq("id", "42000000-0000-4000-8000-000000000001");
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!publishableKey) throw new Error("Local publishable key is required for the E2E administrator session");
+  const session = createClient(url, publishableKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { error: loginError } = await session.auth.signInWithPassword(e2eAccounts.admin);
+  if (loginError) throw loginError;
+  const { data: existingContent } = await session.from("content_items").select("current_draft_id").eq("id", "42000000-0000-4000-8000-000000000001").single();
+  let draftId = existingContent?.current_draft_id as string | null;
+  if (!draftId) {
+    draftId = randomUUID();
+    const { data: lastVersion } = await session.from("content_versions").select("version_no").eq("content_id", "42000000-0000-4000-8000-000000000001").order("version_no", { ascending: false }).limit(1).maybeSingle();
+    const { error: draftInsertError } = await session.from("content_versions").insert({ id: draftId, brand_id: lumiId, content_id: "42000000-0000-4000-8000-000000000001", version_no: (lastVersion?.version_no ?? 0) + 1, status: "draft", body_json: { schemaVersion: 1, blocks: [{ id: randomUUID(), type: "paragraph", text: "Virtual saved studio paragraph" }], metadata: { primaryKeyword: "virtual search", keywords: [], description: "" } }, created_by: created.admin, is_working_draft: true, title_snapshot: "Virtual Lumi Search Guide", document_schema_version: 1 });
+    if (draftInsertError) throw draftInsertError;
+  } else {
+    const { error: draftUpdateError } = await session.from("content_versions").update({ body_json: { schemaVersion: 1, blocks: [{ id: randomUUID(), type: "paragraph", text: "Virtual saved studio paragraph" }], metadata: { primaryKeyword: "virtual search", keywords: [], description: "" } }, title_snapshot: "Virtual Lumi Search Guide", revision: 1 }).eq("id", draftId).eq("is_working_draft", true);
+    if (draftUpdateError) throw draftUpdateError;
+  }
+  const { error: linkError } = await session.from("content_items").update({ current_draft_id: draftId, current_version_id: null, published_version_id: null, published_at: null, publication_updated_at: null, status: "draft", primary_keyword: "virtual search", title: "Virtual Lumi Search Guide" }).eq("id", "42000000-0000-4000-8000-000000000001");
   if (linkError) throw linkError;
   const { error: jobsCleanupError } = await admin.from("generation_jobs").delete().eq("brand_id", lumiId);
   if (jobsCleanupError) throw jobsCleanupError;
@@ -51,4 +65,6 @@ export default async function setup() {
   if (evidenceCleanupError) throw evidenceCleanupError;
   const { error: knowledgeCleanupError } = await admin.from("brand_knowledge_profiles").delete().eq("brand_id", lumiId);
   if (knowledgeCleanupError) throw knowledgeCleanupError;
+  const { error: connectionCleanupError } = await admin.from("publishing_connections").delete().eq("brand_id", lumiId);
+  if (connectionCleanupError) throw connectionCleanupError;
 }

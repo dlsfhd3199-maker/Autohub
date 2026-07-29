@@ -7,7 +7,7 @@ import { getBrandKnowledge } from "@/modules/brand-knowledge/queries";
 import { generationPlanSchema, generatedDraftSchema, type GenerationContext } from "./contracts";
 import { generationLimits } from "./config";
 import { createGenerationProvider } from "./provider";
-import { GenerationBudgetError, MAX_JOB_ESTIMATED_COST_USD } from "./budget";
+import { GenerationBudgetError } from "./budget";
 import { OpenAiGenerationError } from "./openai-provider";
 
 const startSchema = z.object({ brandId: z.string().uuid(), topic: z.string().trim().min(5).max(300), primaryKeyword: z.string().trim().min(1).max(120), secondaryKeywords: z.string().max(1000).transform((value) => value.split(",").map((item) => item.trim()).filter(Boolean)).pipe(z.array(z.string().max(120)).max(20)), idempotencyKey: z.string().uuid(), evidenceIds: z.array(z.string().uuid()).max(30) });
@@ -47,7 +47,7 @@ export async function generatePlan(_state: GenerationActionState, formData: Form
     const evidence = knowledge.sources.filter((source) => input.evidenceIds.includes(source.id) && source.is_active).map((source) => ({ id: source.id, title: source.title, officialUrl: source.official_url, evidenceText: source.evidence_text }));
     if (evidence.length !== input.evidenceIds.length) return failure("선택한 근거 중 사용할 수 없는 항목이 있습니다.");
     const snapshot = evidence;
-    const { data: job, error: insertError } = await supabase.from("generation_jobs").insert({ brand_id: input.brandId, requested_by: userId, topic: input.topic, primary_keyword: input.primaryKeyword, secondary_keywords: input.secondaryKeywords, status: "planning", idempotency_key: input.idempotencyKey, evidence_snapshot: snapshot, model: "gpt-5.6-terra", estimated_cost_usd: MAX_JOB_ESTIMATED_COST_USD }).select("id,topic,primary_keyword,secondary_keywords,evidence_snapshot").single();
+    const { data: job, error: insertError } = await supabase.from("generation_jobs").insert({ brand_id: input.brandId, requested_by: userId, topic: input.topic, primary_keyword: input.primaryKeyword, secondary_keywords: input.secondaryKeywords, status: "planning", idempotency_key: input.idempotencyKey, evidence_snapshot: snapshot, model: "gpt-5.6-terra", generation_provider: "fake", estimated_cost_usd: 0 }).select("id,topic,primary_keyword,secondary_keywords,evidence_snapshot").single();
     if (insertError) return failure(insertError.code === "23505" ? "다른 생성 작업이 진행 중입니다. 완료 후 다시 시도해 주세요." : "생성 작업을 시작하지 못했습니다.");
     jobId = job.id;
     const provider = createGenerationProvider();
