@@ -6,16 +6,19 @@ const context = {
   topic: "가상 탐색 안내",
   primaryKeyword: "가상 키워드",
   secondaryKeywords: ["가상 보조어"],
+  selectedProduct: null,
   knowledge: { brandIntroduction: "Virtual Lumi의 가상 소개" },
   evidence: [{ id: "70000000-0000-4000-8000-000000000001", title: "가상 공식 자료", officialUrl: "https://example.com/source", evidenceText: "가상 공식 근거 텍스트입니다." }],
 };
 
 const validPlan = {
   title: "가상 안내",
+  titleCandidates: ["가상 안내"],
   searchIntent: "가상 정보를 확인하려는 의도",
   coreAnswer: "등록된 가상 공식 근거를 확인하세요.",
+  expectedAudience: "가상 독자",
   sections: [{ heading: "핵심 정보", purpose: "근거 설명", evidenceSourceIds: [context.evidence[0].id], suggestedBlocks: ["section" as const] }],
-  reviewNotes: [],
+  faqCandidates: ["가상 질문은 무엇인가요?"], reviewNotes: [],
 };
 
 function clientWith(parse: ReturnType<typeof vi.fn>) {

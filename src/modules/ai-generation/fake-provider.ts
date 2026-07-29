@@ -4,7 +4,7 @@ import type { GeneratedDraft, GenerationContext, GenerationPlan, GenerationProvi
 export class FakeGenerationProvider implements GenerationProvider {
   async generatePlan(context: GenerationContext) {
     const evidenceIds = context.evidence.map((item) => item.id);
-    const plan: GenerationPlan = { title: `${context.topic} 가상 안내`, searchIntent: `${context.primaryKeyword}에 대한 명확한 공식 정보 탐색`, coreAnswer: `${context.topic}은 등록된 가상 공식 근거를 기준으로 확인해야 합니다.`, sections: [{ heading: "핵심 정보", purpose: "공식 근거를 간결하게 설명", evidenceSourceIds: evidenceIds, suggestedBlocks: ["section","checklist"] }, { heading: "자주 묻는 질문", purpose: "독자의 후속 질문에 답변", evidenceSourceIds: evidenceIds, suggestedBlocks: ["faq","cta","sources"] }], reviewNotes: context.evidence.length ? [] : ["등록된 공식 근거가 없어 전체 내용을 검수해야 합니다."] };
+    const plan: GenerationPlan = { title: `${context.topic} 가상 안내`, titleCandidates: [`${context.topic} 가상 안내`, `${context.primaryKeyword} 공식 근거 확인 가이드`, `${context.topic} 핵심 질문과 답변`], searchIntent: `${context.primaryKeyword}에 대한 명확한 공식 정보 탐색`, expectedAudience: String(context.knowledge?.target_audience ?? "가상 정보를 정확히 확인하려는 독자"), coreAnswer: `${context.topic}은 등록된 가상 공식 근거를 기준으로 확인해야 합니다.`, sections: [{ heading: "핵심 정보", purpose: "공식 근거를 간결하게 설명", evidenceSourceIds: evidenceIds, suggestedBlocks: ["section","checklist"] }, { heading: "자주 묻는 질문", purpose: "독자의 후속 질문에 답변", evidenceSourceIds: evidenceIds, suggestedBlocks: ["faq","cta","sources"] }], faqCandidates: [`${context.primaryKeyword}에서 가장 먼저 확인할 점은 무엇인가요?`, "등록된 공식 근거의 적용 범위는 어디까지인가요?"], reviewNotes: context.evidence.length ? [] : ["등록된 공식 근거가 없어 전체 내용을 검수해야 합니다."] };
     const usage = { inputTokens: 800, outputTokens: 400 };
     return { value: plan, ...usage, estimatedCostUsd: 0 };
   }

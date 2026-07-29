@@ -15,7 +15,7 @@ export async function requireContentEditor(contentId: string) {
 export async function getContentStudio(contentId: string) {
   const { supabase } = await requireAuthenticatedUser();
   const { data: content, error } = await supabase.from("content_items")
-    .select("id,brand_id,title,status,primary_keyword,current_draft_id,current_version_id,published_version_id,published_at,publication_updated_at,brands!inner(id,name,brand_key),content_versions!content_items_current_draft_fk(id,version_no,status,body_json,revision,saved_at,title_snapshot,is_working_draft)")
+    .select("id,brand_id,title,slug,status,primary_keyword,current_draft_id,current_version_id,published_version_id,published_at,publication_updated_at,brands!inner(id,name,brand_key),content_versions!content_items_current_draft_fk(id,version_no,status,body_json,revision,saved_at,title_snapshot,is_working_draft)")
     .eq("id", contentId).maybeSingle();
   if (error || !content) throw new Error("Content not found");
   const { data: canEdit } = await supabase.rpc("can_edit_brand_content", { target_brand_id: content.brand_id });

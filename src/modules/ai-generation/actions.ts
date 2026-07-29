@@ -10,7 +10,7 @@ import { createGenerationProvider } from "./provider";
 import { GenerationBudgetError } from "./budget";
 import { OpenAiGenerationError } from "./openai-provider";
 
-const startSchema = z.object({ brandId: z.string().uuid(), topic: z.string().trim().min(5).max(300), primaryKeyword: z.string().trim().min(1).max(120), secondaryKeywords: z.string().max(1000).transform((value) => value.split(",").map((item) => item.trim()).filter(Boolean)).pipe(z.array(z.string().max(120)).max(20)), idempotencyKey: z.string().uuid(), evidenceIds: z.array(z.string().uuid()).max(30) });
+const startSchema = z.object({ brandId: z.string().uuid(), topic: z.string().trim().min(5).max(300), primaryKeyword: z.string().trim().min(1).max(120), secondaryKeywords: z.string().max(1000).transform((value) => value.split(",").map((item) => item.trim()).filter(Boolean)).pipe(z.array(z.string().max(120)).max(20)), productIndex: z.union([z.literal("").transform(() => null), z.string().regex(/^\d{1,2}$/).transform(Number)]), idempotencyKey: z.string().uuid(), evidenceIds: z.array(z.string().uuid()).max(30) });
 const draftSchema = z.object({ brandId: z.string().uuid(), jobId: z.string().uuid() });
 export type GenerationActionState = { ok: boolean; message: string; jobId?: string; plan?: z.infer<typeof generationPlanSchema>; contentId?: string };
 const failure = (message: string): GenerationActionState => ({ ok: false, message });
@@ -29,8 +29,8 @@ function safeFailure(error: unknown, stage: "plan" | "draft") {
   return { code: stage === "plan" ? "PLAN_FAILED" : "DRAFT_FAILED", message: stage === "plan" ? "기획안 생성에 실패했습니다. 입력과 근거를 확인해 주세요." : "콘텐츠 초안 생성에 실패했습니다. 다시 시도해 주세요." };
 }
 
-function contextFrom(job: { topic: string; primary_keyword: string; secondary_keywords: unknown; evidence_snapshot: unknown }, knowledge: Record<string, unknown> | null): GenerationContext {
-  return { topic: job.topic, primaryKeyword: job.primary_keyword, secondaryKeywords: z.array(z.string()).parse(job.secondary_keywords), knowledge, evidence: z.array(z.object({ id: z.string().uuid(), title: z.string(), officialUrl: z.string().url(), evidenceText: z.string() })).parse(job.evidence_snapshot) };
+function contextFrom(job: { topic: string; primary_keyword: string; secondary_keywords: unknown; selected_product?: unknown; evidence_snapshot: unknown }, knowledge: Record<string, unknown> | null): GenerationContext {
+  return { topic: job.topic, primaryKeyword: job.primary_keyword, secondaryKeywords: z.array(z.string()).parse(job.secondary_keywords), selectedProduct: job.selected_product ? z.record(z.string(), z.unknown()).parse(job.selected_product) : null, knowledge, evidence: z.array(z.object({ id: z.string().uuid(), title: z.string(), officialUrl: z.string().url(), evidenceText: z.string() })).parse(job.evidence_snapshot) };
 }
 
 export async function generatePlan(_state: GenerationActionState, formData: FormData): Promise<GenerationActionState> {
@@ -44,10 +44,13 @@ export async function generatePlan(_state: GenerationActionState, formData: Form
     const { count } = await supabase.from("generation_jobs").select("id", { count: "exact", head: true }).gte("created_at", dayStart.toISOString()).neq("status", "cancelled");
     if ((count ?? 0) >= generationLimits.dailyJobLimit) return failure("오늘의 로컬 AI 생성 한도 3건을 모두 사용했습니다.");
     const knowledge = await getBrandKnowledge(input.brandId);
+    const products = z.array(z.record(z.string(), z.unknown())).parse((knowledge.profile as Record<string, unknown> | null)?.product_info ?? []);
+    const selectedProduct = input.productIndex === null ? null : products[input.productIndex];
+    if (products.length > 0 && !selectedProduct) return failure("사용할 가상 상품을 선택해 주세요.");
     const evidence = knowledge.sources.filter((source) => input.evidenceIds.includes(source.id) && source.is_active).map((source) => ({ id: source.id, title: source.title, officialUrl: source.official_url, evidenceText: source.evidence_text }));
     if (evidence.length !== input.evidenceIds.length) return failure("선택한 근거 중 사용할 수 없는 항목이 있습니다.");
     const snapshot = evidence;
-    const { data: job, error: insertError } = await supabase.from("generation_jobs").insert({ brand_id: input.brandId, requested_by: userId, topic: input.topic, primary_keyword: input.primaryKeyword, secondary_keywords: input.secondaryKeywords, status: "planning", idempotency_key: input.idempotencyKey, evidence_snapshot: snapshot, model: "gpt-5.6-terra", generation_provider: "fake", estimated_cost_usd: 0 }).select("id,topic,primary_keyword,secondary_keywords,evidence_snapshot").single();
+    const { data: job, error: insertError } = await supabase.from("generation_jobs").insert({ brand_id: input.brandId, requested_by: userId, topic: input.topic, primary_keyword: input.primaryKeyword, secondary_keywords: input.secondaryKeywords, selected_product: selectedProduct, status: "planning", idempotency_key: input.idempotencyKey, evidence_snapshot: snapshot, model: "gpt-5.6-terra", generation_provider: "fake", estimated_cost_usd: 0 }).select("id,topic,primary_keyword,secondary_keywords,selected_product,evidence_snapshot").single();
     if (insertError) return failure(insertError.code === "23505" ? "다른 생성 작업이 진행 중입니다. 완료 후 다시 시도해 주세요." : "생성 작업을 시작하지 못했습니다.");
     jobId = job.id;
     const provider = createGenerationProvider();
@@ -70,7 +73,7 @@ export async function generateDraft(_state: GenerationActionState, formData: For
   try {
     const input = draftSchema.parse(Object.fromEntries(formData));
     const { supabase } = await requireBrandPermission(input.brandId, "edit");
-    const { data: job, error } = await supabase.from("generation_jobs").select("id,brand_id,topic,primary_keyword,secondary_keywords,evidence_snapshot,plan_json,status,input_tokens,output_tokens,actual_cost_usd").eq("id", input.jobId).eq("brand_id", input.brandId).maybeSingle();
+    const { data: job, error } = await supabase.from("generation_jobs").select("id,brand_id,topic,primary_keyword,secondary_keywords,selected_product,evidence_snapshot,plan_json,status,input_tokens,output_tokens,actual_cost_usd").eq("id", input.jobId).eq("brand_id", input.brandId).maybeSingle();
     if (error || !job || job.status !== "plan_ready") return failure("초안을 생성할 수 있는 기획안이 아닙니다.");
     const { error: lockError } = await supabase.from("generation_jobs").update({ status: "drafting", started_at: new Date().toISOString() }).eq("id", job.id).eq("status", "plan_ready");
     if (lockError) return failure("다른 생성 작업이 진행 중입니다.");
@@ -94,4 +97,15 @@ export async function generateDraft(_state: GenerationActionState, formData: For
     if (lockedJobId && lockedBrandId) { try { const { supabase } = await requireBrandPermission(lockedBrandId, "edit"); await supabase.from("generation_jobs").update({ status: "failed", error_code: safe.code, safe_error_message: safe.message }).eq("id", lockedJobId); } catch {} }
     return failure(safe.message);
   }
+}
+
+export async function cancelGeneration(_state: GenerationActionState, formData: FormData): Promise<GenerationActionState> {
+  try {
+    const input = draftSchema.parse(Object.fromEntries(formData));
+    const { supabase } = await requireBrandPermission(input.brandId, "edit");
+    const { data, error } = await supabase.from("generation_jobs").update({ status: "cancelled", cancelled_at: new Date().toISOString(), safe_error_message: "사용자가 기획안 검토 단계에서 작업을 취소했습니다." }).eq("id", input.jobId).eq("brand_id", input.brandId).eq("status", "plan_ready").select("id").maybeSingle();
+    if (error || !data) return failure("취소할 수 있는 생성 작업이 아닙니다.");
+    revalidatePath(`/workspace/brands/${input.brandId}/generate`);
+    return { ok: true, message: "데모 생성 작업을 취소했습니다. 조건을 수정해 새 작업을 시작할 수 있습니다." };
+  } catch { return failure("데모 생성 작업을 취소하지 못했습니다."); }
 }

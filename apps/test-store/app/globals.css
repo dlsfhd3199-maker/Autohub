@@ -1,0 +1,69 @@
+:root { --navy:#0e1b36; --ink:#14213b; --muted:#5d687d; --blue:#2859d9; --line:#dce3ef; --surface:#f5f7fb; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0; color:var(--ink); background:var(--surface); font-family:Arial,"Noto Sans KR",sans-serif; line-height:1.65; }
+a { color:inherit; }
+.site-header { position:sticky; z-index:20; top:0; border-bottom:1px solid var(--line); background:rgb(255 255 255 / 94%); backdrop-filter:blur(12px); }
+.site-header-inner { width:min(1120px,calc(100% - 40px)); min-height:68px; margin:auto; display:flex; align-items:center; gap:32px; }
+.store-brand { display:flex; align-items:center; gap:9px; text-decoration:none; }
+.store-brand > span { width:34px; height:34px; display:grid; place-items:center; border-radius:9px; color:white; background:var(--blue); font-weight:800; }
+.site-header nav { margin-left:auto; }
+.site-header nav a { color:#34415a; text-decoration:none; font-size:14px; font-weight:700; }
+.site-header em,.test-badge { padding:5px 9px; border-radius:999px; color:#3153a5; background:#edf3ff; font-size:11px; font-style:normal; font-weight:750; }
+main { width:min(1120px,calc(100% - 40px)); min-height:calc(100vh - 220px); margin:auto; padding:54px 0 80px; }
+.blog-hero { max-width:700px; margin-bottom:36px; }
+.eyebrow { margin:0 0 8px; color:var(--blue); font-size:11px; font-weight:800; letter-spacing:.14em; }
+.blog-hero h1,.article-header h1 { margin:0; font-size:clamp(32px,5vw,54px); line-height:1.14; letter-spacing:-.045em; }
+.blog-hero > p:last-child,.article-header > p { color:var(--muted); }
+.content-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+.content-card { min-height:280px; padding:24px; display:flex; flex-direction:column; border:1px solid var(--line); border-radius:16px; background:white; box-shadow:0 8px 28px rgb(25 42 79 / 6%); }
+.content-card h2 { margin:18px 0 8px; font-size:21px; line-height:1.35; }
+.content-card h2 a { text-decoration:none; }
+.content-card > p { color:var(--muted); font-size:13px; }
+.content-card > div { margin-top:auto; display:flex; justify-content:space-between; gap:10px; color:var(--muted); font-size:11px; }
+.read-link { margin-top:15px; color:var(--blue); font-size:13px; font-weight:800; text-decoration:none; }
+.breadcrumbs { margin-bottom:30px; display:flex; gap:8px; color:var(--muted); font-size:12px; overflow:hidden; white-space:nowrap; }
+.breadcrumbs span:last-child { overflow:hidden; text-overflow:ellipsis; }
+.article-page { max-width:900px; }
+.article-page > article { padding:clamp(24px,6vw,64px); border:1px solid var(--line); border-radius:20px; background:white; box-shadow:0 12px 38px rgb(25 42 79 / 7%); }
+.article-header { padding-bottom:30px; border-bottom:1px solid var(--line); }
+.article-header h1 { margin-top:14px; font-size:clamp(30px,5vw,48px); }
+.article-header dl { display:flex; gap:24px; margin:20px 0 0; }
+.article-header dl div { display:flex; gap:7px; font-size:12px; }
+.article-header dt { color:var(--muted); }
+.article-header dd { margin:0; font-weight:700; }
+.article-blocks { padding-top:30px; font-size:16px; }
+.article-blocks h2 { margin:42px 0 12px; font-size:25px; letter-spacing:-.025em; }
+.answer-card,.summary-card,.cta-card { margin:24px 0; padding:22px; border-radius:14px; }
+.answer-card { border-left:4px solid var(--blue); background:#f1f5ff; }
+.answer-card span { color:var(--blue); font-size:12px; font-weight:800; }
+.answer-card p,.summary-card p,.cta-card p { margin:6px 0 0; }
+.summary-card { background:#f6f8fb; }
+.summary-card h2 { margin:0; font-size:17px; }
+.checklist { padding:0; display:grid; gap:9px; list-style:none; }
+.checklist li { display:flex; gap:9px; }
+.checklist span { color:var(--blue); font-weight:900; }
+.table-scroll { margin:24px 0; overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th,td { padding:12px; border:1px solid var(--line); text-align:left; }
+th { background:#f5f7fb; }
+.faq-list details { padding:15px 0; border-bottom:1px solid var(--line); }
+.faq-list summary { cursor:pointer; font-weight:800; }
+.cta-card { display:flex; align-items:center; justify-content:space-between; gap:18px; color:white; background:var(--navy); }
+.cta-card a,.button-link { padding:10px 15px; flex:none; border-radius:8px; color:white; background:var(--blue); text-decoration:none; font-weight:800; }
+.source-list { margin-top:46px; padding-top:24px; border-top:1px solid var(--line); }
+.source-list a { color:var(--blue); overflow-wrap:anywhere; }
+.related-content { margin-top:28px; }
+.related-content > div { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.related-content a { padding:18px; display:grid; border:1px solid var(--line); border-radius:12px; background:white; text-decoration:none; font-weight:750; }
+.related-content a span { color:var(--blue); font-size:12px; }
+.empty-state,.error-state,.loading-state { min-height:300px; padding:40px; display:grid; place-items:center; align-content:center; text-align:center; border:1px solid var(--line); border-radius:16px; background:white; }
+.error-state span { color:#a85a00; font-weight:800; }
+.error-state p,.empty-state p { max-width:600px; color:var(--muted); }
+.error-state button { padding:10px 16px; border:0; border-radius:8px; color:white; background:var(--blue); font-weight:800; }
+footer { padding:34px 0; color:#c4cee2; background:var(--navy); }
+footer > div { width:min(1120px,calc(100% - 40px)); margin:auto; }
+footer p { margin:4px 0 0; font-size:12px; }
+@media(max-width:800px){.content-grid,.related-content>div{grid-template-columns:1fr 1fr}.site-header em{display:none}}
+@media(max-width:520px){.site-header-inner,main,footer>div{width:calc(100% - 24px)}.site-header-inner{gap:14px}.content-grid,.related-content>div{grid-template-columns:1fr}main{padding-top:30px}.article-page>article{padding:22px 18px}.article-header dl{display:grid;gap:4px}.cta-card{align-items:stretch;flex-direction:column}.cta-card a{text-align:center}.blog-hero h1{font-size:34px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}

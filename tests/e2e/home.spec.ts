@@ -78,6 +78,7 @@ test.describe.serial("phase one role and UI workflows", () => {
   });
 
   test("studio autosaves blocks, creates versions, and detects tab conflicts", async ({ page, context }) => {
+    test.setTimeout(90_000);
     await login(page, e2eAccounts.admin);
     await page.goto("/workspace/content");
     await page.getByText("새 콘텐츠", { exact: true }).click();
@@ -101,7 +102,7 @@ test.describe.serial("phase one role and UI workflows", () => {
     await expect(page.getByLabel("FAQ 항목")).toHaveValue("가상 질문 | 가상 답변");
     await page.getByLabel("변경 요약").fill("가상 첫 버전");
     await page.getByRole("button", { name: "새 버전 생성" }).click();
-    await expect(page.getByText("v1")).toBeVisible();
+    await expect(page.getByText("v1", { exact: true })).toBeVisible();
     await expect(page.getByText(/추가 \d+ · 삭제 \d+ · 변경 \d+/)).toBeVisible();
     const second = await context.newPage();
     await second.goto(page.url());

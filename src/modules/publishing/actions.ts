@@ -12,7 +12,7 @@ export type PublishingActionState = { ok: boolean; message: string; rawKey?: str
 
 export async function rotatePublishingConnection(_state: PublishingActionState, formData: FormData): Promise<PublishingActionState> {
   try {
-    const { brandId } = brandSchema.parse(Object.fromEntries(formData));
+    const { brandId } = brandSchema.parse({ brandId: formData.get("brandId") });
     const { supabase, userId } = await requireBrandPermission(brandId, "manage");
     const rawKey = createPublishingKey();
     const { error } = await supabase.from("publishing_connections").upsert({ brand_id: brandId, status: "active", bearer_key_hash: hashPublishingKey(rawKey), created_by: userId, disabled_at: null }, { onConflict: "brand_id" });
@@ -26,7 +26,7 @@ export async function rotatePublishingConnection(_state: PublishingActionState, 
 
 export async function disablePublishingConnection(_state: PublishingActionState, formData: FormData): Promise<PublishingActionState> {
   try {
-    const { brandId } = brandSchema.parse(Object.fromEntries(formData));
+    const { brandId } = brandSchema.parse({ brandId: formData.get("brandId") });
     const { supabase } = await requireBrandPermission(brandId, "manage");
     const { error } = await supabase.from("publishing_connections").update({ status: "disabled", disabled_at: new Date().toISOString() }).eq("brand_id", brandId);
     if (error) throw error;
@@ -38,17 +38,19 @@ export async function disablePublishingConnection(_state: PublishingActionState,
 }
 
 export async function testPublishContent(_state: PublishingActionState, formData: FormData): Promise<PublishingActionState> {
-  try {
-    const input = publishSchema.parse(Object.fromEntries(formData));
-    const { supabase } = await requireAuthenticatedUser();
-    const { data: content, error: contentError } = await supabase.from("content_items").select("brand_id").eq("id", input.contentId).maybeSingle();
-    if (contentError || !content) throw contentError ?? new Error("not found");
-    await requireBrandPermission(content.brand_id, "manage");
-    const { error } = await supabase.rpc("test_publish_content", { target_content_id: input.contentId, target_version_id: input.versionId });
-    if (error) throw error;
-    revalidatePath(`/workspace/content/${input.contentId}/studio`);
-    return { ok: true, message: "선택한 불변 버전을 테스트 발행했습니다. 실제 승인이나 운영 발행이 아닙니다." };
-  } catch {
-    return { ok: false, message: "테스트 발행에 실패했습니다. 관리자 권한과 명시적 버전을 확인해 주세요." };
-  }
+  const parsed = publishSchema.safeParse({ contentId: formData.get("contentId"), versionId: formData.get("versionId") });
+  if (!parsed.success) return { ok: false, message: "발행할 콘텐츠와 버전 정보가 올바르지 않습니다." };
+  let authenticated: Awaited<ReturnType<typeof requireAuthenticatedUser>>;
+  try { authenticated = await requireAuthenticatedUser(); }
+  catch { return { ok: false, message: "로그인 세션을 확인한 뒤 다시 시도해 주세요." }; }
+  const { data: content, error: contentError } = await authenticated.supabase.from("content_items").select("brand_id").eq("id", parsed.data.contentId).maybeSingle();
+  if (contentError || !content) return { ok: false, message: "접근 가능한 테스트 발행 콘텐츠를 찾을 수 없습니다." };
+  try { await requireBrandPermission(content.brand_id, "manage"); }
+  catch { return { ok: false, message: "테스트 발행은 대행사 관리자만 할 수 있습니다." }; }
+  const { error } = await authenticated.supabase.rpc("test_publish_content", { target_content_id: parsed.data.contentId, target_version_id: parsed.data.versionId });
+  if (error?.code === "42501") return { ok: false, message: "테스트 발행은 대행사 관리자만 할 수 있습니다." };
+  if (error?.code === "23514") return { ok: false, message: "working draft가 아닌 명시적 불변 버전을 선택해 주세요." };
+  if (error) return { ok: false, message: "테스트 발행 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요." };
+  revalidatePath(`/workspace/content/${parsed.data.contentId}/studio`);
+  return { ok: true, message: "선택한 불변 버전을 테스트 발행했습니다. 실제 승인이나 운영 발행이 아닙니다." };
 }

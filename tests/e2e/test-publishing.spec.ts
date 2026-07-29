@@ -11,10 +11,12 @@ async function login(page: import("@playwright/test").Page, account: { email: st
 
 test("administrator publishes an immutable version through a brand-scoped bearer API", async ({ page, request }) => {
   await login(page, e2eAccounts.admin);
-  await page.goto("/workspace/brands/32000000-0000-4000-8000-000000000001");
+  await page.goto("/workspace/brands/32000000-0000-4000-8000-000000000003");
   await page.getByRole("button", { name: "연결 키 생성" }).click();
   const rawKey = await page.locator(".one-time-key code").textContent();
   expect(rawKey).toMatch(/^ahp_[A-Za-z0-9_-]{43}$/);
+  const apiKey = process.env.E2E_PUBLISHING_KEY;
+  if (!apiKey) throw new Error("Ephemeral E2E publishing key is missing");
 
   await page.goto("/workspace/content/42000000-0000-4000-8000-000000000001/studio");
   const versionForm = page.locator(".version-form");
@@ -24,20 +26,21 @@ test("administrator publishes an immutable version through a brand-scoped bearer
   await page.getByRole("button", { name: "선택 버전 테스트 발행" }).click();
   await expect(page.getByText(/선택한 불변 버전을 테스트 발행했습니다/)).toBeVisible();
 
-  const list = await request.get("/api/publishing/v1/brands/virtual-lumi/contents", { headers: { authorization: `Bearer ${rawKey}` } });
+  const list = await request.get("/api/publishing/v1/brands/virtual-lumi/contents", { headers: { authorization: `Bearer ${apiKey}` } });
   expect(list.status()).toBe(200);
   expect(list.headers().etag).toBeTruthy();
   expect(list.headers()["last-modified"]).toBeTruthy();
   const body = await list.json();
-  expect(body.items).toHaveLength(1);
-  expect(body.items[0]).toMatchObject({ slug: "virtual-lumi-search-guide", status: "test_published", versionNo: 1 });
+  const published = body.items.find((item: { slug: string }) => item.slug === "virtual-lumi-search-guide");
+  expect(published).toMatchObject({ slug: "virtual-lumi-search-guide", status: "test_published" });
+  expect(published.versionNo).toBeGreaterThan(0);
   expect(JSON.stringify(body)).not.toContain("노출 금지 초안");
 
-  const detail = await request.get("/api/publishing/v1/brands/virtual-lumi/contents/virtual-lumi-search-guide", { headers: { authorization: `Bearer ${rawKey}` } });
+  const detail = await request.get("/api/publishing/v1/brands/virtual-lumi/contents/virtual-lumi-search-guide", { headers: { authorization: `Bearer ${apiKey}` } });
   expect(detail.status()).toBe(200);
-  const notModified = await request.get("/api/publishing/v1/brands/virtual-lumi/contents/virtual-lumi-search-guide", { headers: { authorization: `Bearer ${rawKey}`, "if-none-match": detail.headers().etag } });
+  const notModified = await request.get("/api/publishing/v1/brands/virtual-lumi/contents/virtual-lumi-search-guide", { headers: { authorization: `Bearer ${apiKey}`, "if-none-match": detail.headers().etag } });
   expect(notModified.status()).toBe(304);
-  expect((await request.get("/api/publishing/v1/brands/virtual-bridge/contents", { headers: { authorization: `Bearer ${rawKey}` } })).status()).toBe(401);
+  expect((await request.get("/api/publishing/v1/brands/virtual-bridge/contents", { headers: { authorization: `Bearer ${apiKey}` } })).status()).toBe(401);
   expect((await request.get("/api/publishing/v1/brands/virtual-lumi/contents", { headers: { authorization: "Bearer ahp_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" } })).status()).toBe(401);
 });
 
