@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:store": "node scripts/start-test-store.mjs --hostname 127.0.0.1 --port 3100",
+    "dev:acceptance": "node scripts/start-local-acceptance.mjs",
     "build": "next build",
     "build:store": "pnpm --dir apps/test-store build",
     "start": "next start",
