@@ -11,7 +11,7 @@ export function AiGenerationWorkspace({ brandId, sources }: { brandId: string; s
   const [draftState, draftAction, draftPending] = useActionState(generateDraft, initial);
   const [idempotencyKey] = useState(() => createUuidV4());
   return <div className="generation-flow">
-    <section className="panel settings-panel"><div className="panel-title"><div><h2>1. 콘텐츠 생성 정보</h2><span>API 키 없이 fake provider로 파이프라인을 검증합니다.</span></div></div>
+    <section className="panel settings-panel"><div className="panel-title"><div><h2>1. 콘텐츠 생성 정보</h2><span>등록한 브랜드 설정과 공식 근거를 사용해 기획안을 생성합니다.</span></div></div>
       <form action={planAction} className="settings-form"><input type="hidden" name="brandId" value={brandId} /><input type="hidden" name="idempotencyKey" value={idempotencyKey} />
         <div className="form-grid"><label className="field span-2"><span>작성 주제</span><input name="topic" required minLength={5} maxLength={300} /></label><label className="field"><span>핵심 키워드</span><input name="primaryKeyword" required maxLength={120} /></label><label className="field"><span>보조 키워드</span><input name="secondaryKeywords" placeholder="쉼표로 구분" /></label></div>
         <fieldset className="evidence-picker"><legend>사용할 공식 근거</legend>{sources.length ? sources.map((source) => <label key={source.id}><input type="checkbox" name="evidenceIds" value={source.id} defaultChecked /><span><strong>{source.title}</strong><small>{source.official_url}</small></span></label>) : <p>근거 없이도 생성할 수 있지만 전체 내용이 검수 필요로 표시됩니다.</p>}</fieldset>

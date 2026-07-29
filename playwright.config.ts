@@ -23,7 +23,7 @@ function localSupabaseEnv(): Record<string, string> {
 
 const testEnv = { ...process.env, ...localSupabaseEnv() };
 Object.assign(process.env, testEnv);
-const webEnv = Object.fromEntries(Object.entries(testEnv).filter(([key, value]) => key !== "E2E_SUPABASE_SERVICE_ROLE_KEY" && typeof value === "string")) as Record<string, string>;
+const webEnv = { ...Object.fromEntries(Object.entries(testEnv).filter(([key, value]) => key !== "E2E_SUPABASE_SERVICE_ROLE_KEY" && typeof value === "string")), E2E_FAKE_OPENAI: "true" } as Record<string, string>;
 
 export default defineConfig({
   testDir: "./tests/e2e", fullyParallel: false, workers: 1, forbidOnly: Boolean(process.env.CI), retries: process.env.CI ? 2 : 0,

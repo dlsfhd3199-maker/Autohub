@@ -1,11 +1,12 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(18);
+select plan(19);
 
 select has_table('public','brand_knowledge_profiles','brand knowledge profiles exist');
 select has_table('public','evidence_sources','evidence sources exist');
 select has_table('public','generation_jobs','generation jobs exist');
 select has_table('public','publishing_connections','publishing connections exist');
+select has_column('public','generation_jobs','actual_cost_usd','actual API usage cost is stored separately from the preflight estimate');
 
 insert into auth.users (id,instance_id,aud,role,email,encrypted_password,raw_user_meta_data,created_at,updated_at) values
  ('16000000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','poc-admin@example.com','','{"display_name":"Virtual Admin"}',now(),now()),

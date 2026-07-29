@@ -1,6 +1,8 @@
 allowBuilds:
   sharp: true
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - openai@7.1.0
 overrides:
   brace-expansion@5.0.7: 5.0.8
   postcss: 8.5.20

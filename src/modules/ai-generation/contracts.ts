@@ -9,5 +9,9 @@ export const generationPlanSchema = z.object({
 export type GenerationPlan = z.infer<typeof generationPlanSchema>;
 export type GenerationContext = { topic: string; primaryKeyword: string; secondaryKeywords: string[]; knowledge: Record<string, unknown> | null; evidence: Array<{ id: string; title: string; officialUrl: string; evidenceText: string }> };
 export type GeneratedDraft = { document: ContentDocument; reviewItems: Array<{ blockId: string; reason: string; severity: "review"; evidenceSourceIds: string[] }> };
-export interface GenerationProvider { generatePlan(context: GenerationContext): Promise<{ plan: GenerationPlan; inputTokens: number; outputTokens: number }>; generateDraft(context: GenerationContext, plan: GenerationPlan): Promise<{ draft: GeneratedDraft; inputTokens: number; outputTokens: number }>; }
+export type GenerationResult<T> = { value: T; inputTokens: number; outputTokens: number; estimatedCostUsd: number };
+export interface GenerationProvider {
+  generatePlan(context: GenerationContext, consumed?: { inputTokens: number; outputTokens: number }): Promise<GenerationResult<GenerationPlan>>;
+  generateDraft(context: GenerationContext, plan: GenerationPlan, consumed?: { inputTokens: number; outputTokens: number }): Promise<GenerationResult<GeneratedDraft>>;
+}
 export const generatedDraftSchema = z.object({ document: contentDocumentSchema, reviewItems: z.array(z.object({ blockId: z.string().uuid(), reason: z.string().min(1).max(500), severity: z.literal("review"), evidenceSourceIds: z.array(z.string().uuid()).max(20) }).strict()).max(50) }).strict();
