@@ -5,7 +5,7 @@ import path from "node:path";
 const root = process.cwd();
 const rawKey = `ahp_${randomBytes(32).toString("base64url")}`;
 const keyHash = createHash("sha256").update(rawKey).digest("hex");
-const sql = `update public.publishing_connections set bearer_key_hash='${keyHash}', status='active', disabled_at=null where brand_id=(select id from public.brands where slug='virtual-lumi' limit 1);`;
+const sql = `update public.publishing_connections set bearer_key_hash='${keyHash}', status='active', disabled_at=null where brand_id=(select id from public.brands where brand_key='virtual-lumi' limit 1);`;
 const databaseUpdate = spawnSync(
   "docker",
   ["exec", "supabase_db_aeo-content-hub-local", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-c", sql],
