@@ -1,0 +1,35 @@
+import { expect, test } from "@playwright/test";
+import { e2eAccounts } from "./global-setup";
+
+test("administrator completes the fake generation pipeline", async ({ page }) => {
+  await page.goto("/login");
+  await page.locator('input[name="email"]').fill(e2eAccounts.admin.email);
+  await page.locator('input[name="password"]').fill(e2eAccounts.admin.password);
+  await page.locator('button[type="submit"]').click();
+  await page.waitForURL(/\/workspace/);
+  await page.goto("/workspace/brands/32000000-0000-4000-8000-000000000001/ai-settings");
+  await page.locator('textarea[name="introduction"]').fill("Virtual Lumi는 PoC 검증만을 위한 명백한 가상 브랜드입니다.");
+  await page.locator('textarea[name="targetAudience"]').fill("가상 정보를 확인하는 테스트 독자");
+  await page.locator('textarea[name="tone"]').fill("차분하고 근거 중심인 한국어");
+  await page.locator('textarea[name="prohibitedExpressions"]').fill("무조건\n최고");
+  await page.locator('textarea[name="productInfo"]').fill(JSON.stringify([{ name: "Virtual Product Alpha", summary: "가상 상품 설명", features: ["가상 특징"], limitations: ["검수 필요"], officialUrl: "https://example.com/products/alpha" }]));
+  await page.getByRole("button", { name: "AI 콘텐츠 설정 저장" }).click();
+  await expect(page.getByText("AI 콘텐츠 설정을 저장했습니다.")).toBeVisible();
+  const newEvidence = page.locator(".evidence-form").first();
+  await newEvidence.locator('input[name="title"]').fill("Virtual Lumi 공식 가상 자료");
+  await newEvidence.locator('input[name="officialUrl"]').fill("https://example.com/sources/lumi");
+  await newEvidence.locator('textarea[name="evidenceText"]').fill("Virtual Product Alpha는 가상 검증 환경에서만 사용하는 공식 테스트 상품입니다.");
+  await newEvidence.getByRole("button", { name: "공식 근거 추가" }).click();
+  await expect(page.getByText("공식 근거를 등록했습니다.")).toBeVisible();
+  await page.getByRole("link", { name: "콘텐츠 생성" }).click();
+  await page.locator('input[name="topic"]').fill("가상 상품을 확인하는 방법");
+  await page.locator('input[name="primaryKeyword"]').fill("가상 상품 확인");
+  await page.locator('input[name="secondaryKeywords"]').fill("가상 근거, 테스트 안내");
+  await page.getByRole("button", { name: "AI 기획안 생성" }).click();
+  await expect(page.getByRole("heading", { name: "2. 기획안 확인" })).toBeVisible();
+  await page.getByRole("button", { name: "구조화 콘텐츠 초안 생성" }).click();
+  await page.getByRole("link", { name: "콘텐츠 스튜디오에서 검수" }).click();
+  await expect(page.getByText("AI 생성 초안")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /가상 상품을 확인하는 방법/ })).toBeVisible();
+  await expect(page.getByText("Virtual Lumi 공식 가상 자료").first()).toBeVisible();
+});

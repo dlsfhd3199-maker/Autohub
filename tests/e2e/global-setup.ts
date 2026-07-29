@@ -45,4 +45,10 @@ export default async function setup() {
   if (draftError) throw draftError;
   const { error: linkError } = await admin.from("content_items").update({ current_draft_id: draftId, primary_keyword: "virtual search" }).eq("id", "42000000-0000-4000-8000-000000000001");
   if (linkError) throw linkError;
+  const { error: jobsCleanupError } = await admin.from("generation_jobs").delete().eq("brand_id", lumiId);
+  if (jobsCleanupError) throw jobsCleanupError;
+  const { error: evidenceCleanupError } = await admin.from("evidence_sources").delete().eq("brand_id", lumiId);
+  if (evidenceCleanupError) throw evidenceCleanupError;
+  const { error: knowledgeCleanupError } = await admin.from("brand_knowledge_profiles").delete().eq("brand_id", lumiId);
+  if (knowledgeCleanupError) throw knowledgeCleanupError;
 }

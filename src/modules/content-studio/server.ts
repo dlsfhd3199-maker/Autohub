@@ -19,11 +19,11 @@ export async function getContentStudio(contentId: string) {
     .eq("id", contentId).maybeSingle();
   if (error || !content) throw new Error("Content not found");
   const { data: canEdit } = await supabase.rpc("can_edit_brand_content", { target_brand_id: content.brand_id });
-  const { data: history, error: historyError } = await supabase.from("content_versions")
+  const [{ data: history, error: historyError }, { data: generation, error: generationError }] = await Promise.all([supabase.from("content_versions")
     .select("id,version_no,status,title_snapshot,body_json,change_summary,created_at,saved_at,created_by,profiles!content_versions_created_by_fkey(display_name)")
-    .eq("content_id", contentId).eq("is_working_draft", false).order("version_no", { ascending: false });
-  if (historyError) throw historyError;
+    .eq("content_id", contentId).eq("is_working_draft", false).order("version_no", { ascending: false }), supabase.from("generation_jobs").select("id,status,model,evidence_snapshot,review_items,completed_at").eq("content_id", contentId).order("created_at", { ascending: false }).limit(1).maybeSingle()]);
+  if (historyError || generationError) throw historyError ?? generationError;
   const draftValue = Array.isArray(content.content_versions) ? content.content_versions[0] : content.content_versions;
   const draft = draftValue ? { ...draftValue, body_json: contentDocumentSchema.parse(draftValue.body_json) } : null;
-  return { content, draft, history: (history ?? []).map((item) => ({ ...item, body_json: contentDocumentSchema.parse(item.body_json) })), canEdit: canEdit === true };
+  return { content, draft, history: (history ?? []).map((item) => ({ ...item, body_json: contentDocumentSchema.parse(item.body_json) })), generation, canEdit: canEdit === true };
 }
