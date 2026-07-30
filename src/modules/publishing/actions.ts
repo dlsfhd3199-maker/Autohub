@@ -15,7 +15,7 @@ export async function rotatePublishingConnection(_state: PublishingActionState, 
     const { brandId } = brandSchema.parse({ brandId: formData.get("brandId") });
     const { supabase, userId } = await requireBrandPermission(brandId, "manage");
     const rawKey = createPublishingKey();
-    const { error } = await supabase.from("publishing_connections").upsert({ brand_id: brandId, status: "active", bearer_key_hash: hashPublishingKey(rawKey), created_by: userId, disabled_at: null }, { onConflict: "brand_id" });
+    const { error } = await supabase.from("publishing_connections").upsert({ brand_id: brandId, provider: "local-test-store", status: "active", connection_status: "connected", bearer_key_hash: hashPublishingKey(rawKey), created_by: userId, connected_by: userId, granted_capabilities: ["publish","update","inspect","targets"], disabled_at: null }, { onConflict: "brand_id,provider" });
     if (error) throw error;
     revalidatePath(`/workspace/brands/${brandId}`);
     return { ok: true, message: "테스트 발행 연결 키를 생성했습니다. 이 화면을 벗어나면 원문 키를 다시 확인할 수 없습니다.", rawKey };
@@ -28,7 +28,7 @@ export async function disablePublishingConnection(_state: PublishingActionState,
   try {
     const { brandId } = brandSchema.parse({ brandId: formData.get("brandId") });
     const { supabase } = await requireBrandPermission(brandId, "manage");
-    const { error } = await supabase.from("publishing_connections").update({ status: "disabled", disabled_at: new Date().toISOString() }).eq("brand_id", brandId);
+    const { error } = await supabase.from("publishing_connections").update({ status: "disabled", connection_status: "disabled", disabled_at: new Date().toISOString() }).eq("brand_id", brandId).eq("provider", "local-test-store");
     if (error) throw error;
     revalidatePath(`/workspace/brands/${brandId}`);
     return { ok: true, message: "테스트 발행 연결을 비활성화했습니다." };
