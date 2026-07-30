@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getPublicEnv } from "@/lib/env";
 import { publishedDetailSchema, publishedListSchema } from "./contracts";
 import { hashPublishingKey, isPublishingKey } from "./keys";
+import { toPublishDocument } from "@/modules/publish-document/transform";
 
 export function parseBearerHeader(header: string | null) {
   if (!header?.startsWith("Bearer ")) return null;
@@ -29,7 +30,9 @@ export async function fetchPublishedList(brandKey: string, bearerKey: string) {
   const { data, error } = await client.rpc("get_test_published_content_list", { target_brand_key: brandKey, supplied_bearer_hash: hashPublishingKey(bearerKey) });
   if (error) throw new Error("Publishing query failed");
   if (!data) return null;
-  return publishedListSchema.parse(data);
+  const raw = data as { brand: { name: string; domain: string }; items: Array<Record<string, unknown>> };
+  raw.items = raw.items.map((item) => ({ ...item, publishDocument: toPublishDocument({ contentId: String(item.id), versionId: String(item.versionId), versionNo: Number(item.versionNo), isWorkingDraft: false, isExplicitVersion: true, title: String(item.title), slug: String(item.slug), document: item.document as never, publishedAt: String(item.publishedAt), modifiedAt: String(item.updatedAt), canonicalBaseUrl: raw.brand.domain.startsWith("http") ? raw.brand.domain : `https://${raw.brand.domain}`, brandName: raw.brand.name }) }));
+  return publishedListSchema.parse(raw);
 }
 
 export async function fetchPublishedDetail(brandKey: string, slug: string, bearerKey: string) {
@@ -38,5 +41,7 @@ export async function fetchPublishedDetail(brandKey: string, slug: string, beare
   const { data, error } = await client.rpc("get_test_published_content_detail", { target_brand_key: brandKey, target_slug: slug, supplied_bearer_hash: hashPublishingKey(bearerKey) });
   if (error) throw new Error("Publishing query failed");
   if (!data) return null;
-  return publishedDetailSchema.parse(data);
+  const raw = data as { brand: { name: string; domain: string }; item: Record<string, unknown> | null };
+  if (raw.item) raw.item = { ...raw.item, publishDocument: toPublishDocument({ contentId: String(raw.item.id), versionId: String(raw.item.versionId), versionNo: Number(raw.item.versionNo), isWorkingDraft: false, isExplicitVersion: true, title: String(raw.item.title), slug: String(raw.item.slug), document: raw.item.document as never, publishedAt: String(raw.item.publishedAt), modifiedAt: String(raw.item.updatedAt), canonicalBaseUrl: raw.brand.domain.startsWith("http") ? raw.brand.domain : `https://${raw.brand.domain}`, brandName: raw.brand.name }) };
+  return publishedDetailSchema.parse(raw);
 }

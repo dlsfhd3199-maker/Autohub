@@ -1,7 +1,8 @@
 import type { ContentBlock } from "../lib/content-hub";
 
 const strings = (value: unknown) => Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
-export function ContentDocument({ blocks }: { blocks: ContentBlock[] }) {
+export function ContentDocument({ blocks, safeHtml }: { blocks: ContentBlock[]; safeHtml?: string }) {
+  if (safeHtml) return <div className="article-blocks" dangerouslySetInnerHTML={{ __html: safeHtml }} />;
   return <div className="article-blocks">{blocks.map((block) => {
     if (block.type === "title") return null;
     if (["answer", "summary", "paragraph", "subheading"].includes(block.type) && typeof block.text === "string") {
