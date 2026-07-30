@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(18);
+select plan(19);
 select has_table('public','publication_records','publication records exist');
 select has_column('public','publishing_connections','provider','connections have provider');
 select has_column('public','publishing_connections','credential_reference','credential reference exists');
@@ -22,6 +22,7 @@ insert into public.content_versions(id,brand_id,content_id,version_no,status,bod
 update public.content_versions set is_working_draft=false where id='58000000-0000-4000-8000-000000000002';
 insert into public.content_versions(id,brand_id,content_id,version_no,status,body_json,created_by,is_working_draft,title_snapshot) values
 ('58000000-0000-4000-8000-000000000003','38000000-0000-4000-8000-000000000001','48000000-0000-4000-8000-000000000001',3,'draft','{"schemaVersion":1,"blocks":[{"id":"68000000-0000-4000-8000-000000000003","type":"paragraph","text":"Working"}],"metadata":{"primaryKeyword":"virtual","keywords":[],"description":"Virtual"}}','18000000-0000-4000-8000-000000000001',true,'Working');
+select lives_ok($$insert into public.generation_jobs(brand_id,requested_by,topic,primary_keyword,status,idempotency_key,model,generation_provider) values('38000000-0000-4000-8000-000000000001','18000000-0000-4000-8000-000000000001','Virtual topic','virtual','cancelled','98000000-0000-4000-8000-000000000001','deterministic-fake-v1','fake')$$,'fake provider model is recorded explicitly');
 
 set local role authenticated; select set_config('request.jwt.claim.sub','18000000-0000-4000-8000-000000000001',true);
 insert into public.publishing_connections(id,brand_id,provider,connection_status,bearer_key_hash,created_by,connected_by,credential_reference,granted_capabilities) values('78000000-0000-4000-8000-000000000001','38000000-0000-4000-8000-000000000001','local-test-store','connected',repeat('a',64),'18000000-0000-4000-8000-000000000001','18000000-0000-4000-8000-000000000001','local-virtual://connector','["publish"]'::jsonb);

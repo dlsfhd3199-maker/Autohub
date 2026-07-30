@@ -70,7 +70,7 @@ export default async function setup() {
   if (knowledgeCleanupError) throw knowledgeCleanupError;
   const publishingKey = process.env.E2E_PUBLISHING_KEY;
   if (!publishingKey) throw new Error("Ephemeral E2E publishing key is required");
-  const { error: connectionError } = await admin.from("publishing_connections").upsert({ brand_id: lumiId, status: "active", bearer_key_hash: createHash("sha256").update(publishingKey).digest("hex"), created_by: created.admin, disabled_at: null }, { onConflict: "brand_id" });
+  const { error: connectionError } = await admin.from("publishing_connections").upsert({ brand_id: lumiId, provider: "local-test-store", status: "active", connection_status: "connected", bearer_key_hash: createHash("sha256").update(publishingKey).digest("hex"), created_by: created.admin, connected_by: created.admin, disabled_at: null }, { onConflict: "brand_id,provider" });
   if (connectionError) throw connectionError;
   const { error: pawConnectionCleanupError } = await admin.from("publishing_connections").delete().eq("brand_id", pawId);
   if (pawConnectionCleanupError) throw pawConnectionCleanupError;
