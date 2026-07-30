@@ -24,6 +24,7 @@ const environmentSchema = z.object({
   OPENAI_MAX_DRAFT_OUTPUT_TOKENS: exactInteger("OPENAI_MAX_DRAFT_OUTPUT_TOKENS", 9000).default(9000),
   OPENAI_MAX_COST_PER_JOB_USD: z.coerce.number().refine((value) => value === 0.6, "OPENAI_MAX_COST_PER_JOB_USD must be 0.60").default(0.6),
   OPENAI_MAX_CONCURRENT_JOBS: exactInteger("OPENAI_MAX_CONCURRENT_JOBS", 1).default(1),
+  OPENAI_NETWORK_ENABLED: z.enum(["true", "false"]).default("false"),
 }).strict();
 
 export const generationLimits = generationLimitsSchema.parse({
@@ -46,6 +47,7 @@ export function readOpenAiEnvironment() {
     OPENAI_MAX_DRAFT_OUTPUT_TOKENS: process.env.OPENAI_MAX_DRAFT_OUTPUT_TOKENS,
     OPENAI_MAX_COST_PER_JOB_USD: process.env.OPENAI_MAX_COST_PER_JOB_USD,
     OPENAI_MAX_CONCURRENT_JOBS: process.env.OPENAI_MAX_CONCURRENT_JOBS,
+    OPENAI_NETWORK_ENABLED: process.env.OPENAI_NETWORK_ENABLED,
   });
-  return { ...parsed, apiKey: process.env.OPENAI_API_KEY };
+  return { ...parsed, networkEnabled: parsed.OPENAI_NETWORK_ENABLED === "true", apiKey: process.env.OPENAI_API_KEY };
 }

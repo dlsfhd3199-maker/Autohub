@@ -10,7 +10,13 @@ export type GenerationPlan = z.infer<typeof generationPlanSchema>;
 export type GenerationContext = { topic: string; primaryKeyword: string; secondaryKeywords: string[]; selectedProduct: Record<string, unknown> | null; knowledge: Record<string, unknown> | null; evidence: Array<{ id: string; title: string; officialUrl: string; evidenceText: string }> };
 export type GeneratedDraft = { document: ContentDocument; reviewItems: Array<{ blockId: string; reason: string; severity: "review"; evidenceSourceIds: string[] }> };
 export type GenerationResult<T> = { value: T; inputTokens: number; outputTokens: number; estimatedCostUsd: number };
+export type GenerationProviderId = "fake" | "openai";
+export type GenerationProviderCapability = "structured_plan" | "structured_draft" | "cost_estimation" | "usage_tracking" | "external_network";
+export type GenerationProviderStatus = { provider: GenerationProviderId; enabled: boolean; configured: boolean; networkAllowed: boolean; safeCode: "READY" | "NOT_CONFIGURED" | "NETWORK_DISABLED"; capabilities: readonly GenerationProviderCapability[] };
 export interface GenerationProvider {
+  readonly id: GenerationProviderId;
+  validateConfiguration(): GenerationProviderStatus;
+  estimateCost(inputTokens: number, outputTokens: number): number;
   generatePlan(context: GenerationContext, consumed?: { inputTokens: number; outputTokens: number }): Promise<GenerationResult<GenerationPlan>>;
   generateDraft(context: GenerationContext, plan: GenerationPlan, consumed?: { inputTokens: number; outputTokens: number }): Promise<GenerationResult<GeneratedDraft>>;
 }

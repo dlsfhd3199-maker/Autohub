@@ -50,10 +50,10 @@ export async function generatePlan(_state: GenerationActionState, formData: Form
     const evidence = knowledge.sources.filter((source) => input.evidenceIds.includes(source.id) && source.is_active).map((source) => ({ id: source.id, title: source.title, officialUrl: source.official_url, evidenceText: source.evidence_text }));
     if (evidence.length !== input.evidenceIds.length) return failure("선택한 근거 중 사용할 수 없는 항목이 있습니다.");
     const snapshot = evidence;
-    const { data: job, error: insertError } = await supabase.from("generation_jobs").insert({ brand_id: input.brandId, requested_by: userId, topic: input.topic, primary_keyword: input.primaryKeyword, secondary_keywords: input.secondaryKeywords, selected_product: selectedProduct, status: "planning", idempotency_key: input.idempotencyKey, evidence_snapshot: snapshot, model: "gpt-5.6-terra", generation_provider: "fake", estimated_cost_usd: 0 }).select("id,topic,primary_keyword,secondary_keywords,selected_product,evidence_snapshot").single();
+    const provider = createGenerationProvider();
+    const { data: job, error: insertError } = await supabase.from("generation_jobs").insert({ brand_id: input.brandId, requested_by: userId, topic: input.topic, primary_keyword: input.primaryKeyword, secondary_keywords: input.secondaryKeywords, selected_product: selectedProduct, status: "planning", idempotency_key: input.idempotencyKey, evidence_snapshot: snapshot, model: provider.id === "openai" ? "gpt-5.6-terra" : "deterministic-fake-v1", generation_provider: provider.id, estimated_cost_usd: 0 }).select("id,topic,primary_keyword,secondary_keywords,selected_product,evidence_snapshot").single();
     if (insertError) return failure(insertError.code === "23505" ? "다른 생성 작업이 진행 중입니다. 완료 후 다시 시도해 주세요." : "생성 작업을 시작하지 못했습니다.");
     jobId = job.id;
-    const provider = createGenerationProvider();
     const result = await provider.generatePlan(contextFrom(job, knowledge.profile as Record<string, unknown> | null));
     const plan = generationPlanSchema.parse(result.value);
     const { error: updateError } = await supabase.from("generation_jobs").update({ status: "plan_ready", plan_json: plan, input_tokens: result.inputTokens, output_tokens: result.outputTokens, actual_cost_usd: result.estimatedCostUsd }).eq("id", job.id).eq("brand_id", input.brandId).eq("status", "planning");

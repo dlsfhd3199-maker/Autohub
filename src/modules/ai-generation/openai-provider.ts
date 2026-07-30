@@ -39,13 +39,25 @@ function commonInstructions(context: GenerationContext) {
 }
 
 export class OpenAiGenerationProvider implements GenerationProvider {
+  readonly id = "openai" as const;
   private readonly client: OpenAI;
+  private readonly testTransport: boolean;
 
   constructor(client?: OpenAI) {
     const environment = readOpenAiEnvironment();
-    if (!client && !environment.apiKey) throw new OpenAiGenerationError("NOT_CONFIGURED");
+    this.testTransport = Boolean(client);
+    if (!client && (!environment.apiKey || !environment.networkEnabled)) throw new OpenAiGenerationError("NOT_CONFIGURED");
     this.client = client ?? new OpenAI({ apiKey: environment.apiKey, maxRetries: 0, timeout: 60_000 });
   }
+
+  validateConfiguration() {
+    const environment = readOpenAiEnvironment();
+    const configured = Boolean(environment.apiKey);
+    const networkAllowed = this.testTransport || environment.networkEnabled;
+    return { provider: this.id, enabled: configured && networkAllowed, configured, networkAllowed, safeCode: !configured ? "NOT_CONFIGURED" as const : !networkAllowed ? "NETWORK_DISABLED" as const : "READY" as const, capabilities: ["structured_plan", "structured_draft", "cost_estimation", "usage_tracking", "external_network"] as const };
+  }
+
+  estimateCost(inputTokens: number, outputTokens: number) { return estimateCostUsd({ inputTokens, outputTokens }); }
 
   private async request<T>(args: {
     step: Step;
