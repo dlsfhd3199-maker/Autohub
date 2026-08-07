@@ -1,6 +1,6 @@
 import type { PublishDocument } from "@/modules/publish-document/schema";
 
-export type PublishingConnectorId = "local-test-store" | "html-export" | "cafe24" | "custom-api";
+export type PublishingConnectorId = "local-test-store" | "html-export" | "cafe24" | "cafe24-board-blog" | "custom-api";
 export type PublishingCapability = "publish" | "update" | "unpublish" | "inspect" | "targets" | "html_export";
 export type ConnectorStatus = "connected" | "not_configured" | "disabled" | "error" | "not_installed";
 export type ConnectorConfiguration = { status: ConnectorStatus; publicDomain?: string; credentialReference?: string; defaultTarget?: string };

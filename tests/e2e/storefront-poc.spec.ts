@@ -59,10 +59,13 @@ test("test storefront renders published immutable versions and never exposes lat
   });
 
   await page.goto("http://127.0.0.1:3100/blog");
-  await expect(page.getByRole("heading", { name: "Virtual Lumi 콘텐츠" })).toBeVisible();
-  await page.getByRole("link", { name: title }).click();
+  await expect(page.getByRole("heading", { name: "블로그", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "블로그" })).toHaveAttribute("aria-current", "page");
+  await page.getByRole("link", { name: title, exact: true }).click();
   await expect(page.getByText("가상 질문은 무엇인가요?")).toBeVisible();
   await expect(page.getByRole("link", { name: "가상 상품 보기" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "관련 가상 상품" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /자사몰 상품 보기/ }).first()).toHaveAttribute("href", /^https:\/\/example\.com\//);
   const html = await (await request.get(`http://127.0.0.1:3100/blog/${slug}`)).text();
   expect(html).toContain('"@type":"Article"');
   expect(html).toContain('"@type":"BreadcrumbList"');

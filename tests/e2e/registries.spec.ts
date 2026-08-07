@@ -20,8 +20,9 @@ test("administrator sees provider and connector registries without secrets", asy
   await expect(page.getByText("차단", { exact: true })).toHaveCount(2);
 
   await page.goto(`/workspace/brands/${brandId}/integrations`);
-  await expect(page.getByText("연결 준비 중이며 실제 카페24와 연결되지 않았습니다.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "카페24 커넥터 설치 전" })).toBeDisabled();
+  await expect(page.getByText(/카페24 연결 준비 중 · 실제 쇼핑몰 미연결 상태/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "블로그 게시판 커넥터 설치 전" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Cafe24 커넥터 설치 전" })).toBeDisabled();
   await expect(page.locator("body")).not.toContainText(/bearer|credential_reference|authorization/i);
 });
 

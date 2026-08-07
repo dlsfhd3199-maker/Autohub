@@ -29,15 +29,17 @@ export class HtmlExportConnector implements PublishingConnector {
 }
 
 abstract class OfflinePlaceholder implements PublishingConnector {
-  abstract readonly id: "cafe24" | "custom-api";
-  validateConfiguration() { return { valid: false, safeCode: this.id === "cafe24" ? "CONNECTOR_NOT_INSTALLED" : "NOT_CONFIGURED" }; }
-  async verifyConnection() { return { status: this.id === "cafe24" ? "not_installed" as const : "not_configured" as const, safeCode: this.validateConfiguration().safeCode }; }
+  abstract readonly id: "cafe24" | "cafe24-board-blog" | "custom-api";
+  private get isCafe24() { return this.id === "cafe24" || this.id === "cafe24-board-blog"; }
+  validateConfiguration() { return { valid: false, safeCode: this.isCafe24 ? "CONNECTOR_NOT_INSTALLED" : "NOT_CONFIGURED" }; }
+  async verifyConnection() { return { status: this.isCafe24 ? "not_installed" as const : "not_configured" as const, safeCode: this.validateConfiguration().safeCode }; }
   async listPublishingTargets() { return []; }
-  async publish() { return unavailable(this.id === "cafe24" ? "CONNECTOR_NOT_INSTALLED" : "NOT_CONFIGURED"); }
+  async publish() { return unavailable(this.isCafe24 ? "CONNECTOR_NOT_INSTALLED" : "NOT_CONFIGURED"); }
   async update() { return this.publish(); }
   async unpublish() { return this.publish(); }
   async inspectPublication() { return this.publish(); }
   getCapabilities() { return [] as const; }
 }
 export class Cafe24PlaceholderConnector extends OfflinePlaceholder { readonly id = "cafe24" as const; }
+export class Cafe24BoardBlogPlaceholderConnector extends OfflinePlaceholder { readonly id = "cafe24-board-blog" as const; }
 export class CustomApiPlaceholderConnector extends OfflinePlaceholder { readonly id = "custom-api" as const; }

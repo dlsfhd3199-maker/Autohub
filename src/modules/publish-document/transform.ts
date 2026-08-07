@@ -27,7 +27,7 @@ function renderBlock(block: ContentBlock): string {
 
 function stable(value: unknown): string { if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`; if (value && typeof value === "object") return `{${Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => `${JSON.stringify(key)}:${stable(item)}`).join(",")}}`; return JSON.stringify(value); }
 
-export type PublishDocumentInput = { contentId: string; versionId: string; versionNo: number; isWorkingDraft: boolean; isExplicitVersion: boolean; title: string; slug: string; document: ContentDocument; publishedAt: string; modifiedAt: string; canonicalBaseUrl: string; brandName: string; relatedProducts?: Array<Record<string, unknown>> };
+export type PublishDocumentInput = { contentId: string; versionId: string; versionNo: number; isWorkingDraft: boolean; isExplicitVersion: boolean; title: string; slug: string; document: ContentDocument; publishedAt: string; modifiedAt: string; canonicalBaseUrl: string; brandName: string; relatedProducts?: Array<{ id: string; name: string; description: string; category: string; url: string }> };
 export function toPublishDocument(input: PublishDocumentInput): PublishDocument {
   if (input.isWorkingDraft) throw new PublishDocumentError("WORKING_DRAFT_NOT_PUBLISHABLE");
   if (input.versionNo < 1 || !input.isExplicitVersion) throw new PublishDocumentError("DRAFT_NOT_PUBLISHABLE");
