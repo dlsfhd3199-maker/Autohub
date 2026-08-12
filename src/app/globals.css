@@ -454,6 +454,31 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #c74b4b 
   .content-table-head, .content-table article { min-width: 980px; }
   .people-layout { grid-template-columns: 1fr; }
 }
+
+.section-nav,.brand-detail-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.section-nav a,.brand-detail-actions a { min-height:38px; padding:9px 12px; border:1px solid var(--line); border-radius:9px; color:var(--muted); background:#fff; font-size:13px; font-weight:700; text-decoration:none; }
+.section-nav a[aria-current="page"] { border-color:var(--primary); color:var(--primary); background:#eef4ff; }
+.knowledge-grid,.product-review-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-bottom:18px; }
+.knowledge-card header { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+.knowledge-card h2,.knowledge-card h3 { margin:10px 0; }
+.knowledge-card dl { display:grid; gap:8px; margin:16px 0; }
+.knowledge-card dl div { display:grid; grid-template-columns:110px 1fr; gap:12px; }
+.knowledge-card dt { color:var(--muted); font-size:12px; }
+.knowledge-card dd { margin:0; overflow-wrap:anywhere; }
+.site-action-form { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:12px; }
+.site-action-form .success-message,.site-action-form .form-error { grid-column:1/-1; }
+.inline-action { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.review-list { display:grid; gap:12px; }
+.review-list > article { display:flex; justify-content:space-between; gap:18px; padding:16px; border:1px solid var(--line); border-radius:12px; background:#fbfcff; }
+.review-copy { min-width:0; display:grid; gap:7px; }
+.review-copy h3,.review-copy p { margin:0; }
+.review-copy p { overflow-wrap:anywhere; }
+.risk-badge { margin-left:8px; padding:4px 8px; border-radius:999px; color:#704d00; background:#fff5d8; font-size:11px; font-weight:700; }
+.review-actions { min-width:260px; display:grid; grid-template-columns:1fr 1fr; gap:8px; align-content:start; }
+.review-actions .field,.review-actions .success-message,.review-actions .form-error { grid-column:1/-1; }
+.field-review-summary { color:var(--muted); font-size:12px; overflow-wrap:anywhere; }
+@media (max-width: 800px) { .knowledge-grid,.product-review-grid { grid-template-columns:1fr; } .review-list > article { flex-direction:column; } .review-actions { min-width:0; } }
+@media (max-width: 430px) { .section-nav,.brand-detail-actions { display:grid; grid-template-columns:1fr; } .site-action-form { grid-template-columns:1fr; } .review-actions { grid-template-columns:1fr; } .review-actions .field { grid-column:auto; } }
 @media (max-width: 900px) {
   .app-shell { display: block; }
   .mobile-menu-button { position: fixed; z-index: 50; left: 14px; top: 13px; min-height: 40px; padding: 8px 11px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: white; box-shadow: var(--shadow-card); }
