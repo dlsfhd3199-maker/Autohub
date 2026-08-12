@@ -11,6 +11,30 @@ async function login(page: import("@playwright/test").Page, account: { email: st
   await expect(page.getByRole("heading", { name: "브랜드 운영 현황" })).toBeVisible();
 }
 
+async function waitForCompletedAutosave(
+  page: import("@playwright/test").Page,
+  matchesSnapshot: (payload: Record<string, unknown>) => boolean,
+) {
+  const response = await page.waitForResponse((candidate) => {
+    if (!candidate.url().includes("/api/content/") || !candidate.url().endsWith("/draft")) return false;
+    if (candidate.request().method() !== "PATCH") return false;
+    try {
+      return matchesSnapshot(candidate.request().postDataJSON() as Record<string, unknown>);
+    } catch {
+      return false;
+    }
+  });
+
+  expect(response.status()).toBe(200);
+  const result = await response.json() as { revision?: number; savedAt?: string };
+  expect(result.revision).toBeGreaterThan(1);
+  expect(result.savedAt).toBeTruthy();
+
+  const toolbar = page.locator(".studio-toolbar");
+  await expect(toolbar.locator(".save-state")).toHaveText("저장 완료");
+  await expect(toolbar.locator("small")).toContainText("마지막 저장");
+}
+
 test.describe.serial("phase one role and UI workflows", () => {
   test("admin gets normalized brand fields, duplicate feedback and creation success", async ({ page }) => {
     await login(page, e2eAccounts.admin);
@@ -96,14 +120,15 @@ test.describe.serial("phase one role and UI workflows", () => {
     await createForm.locator('input[name="primaryKeyword"]').fill("virtual studio keyword");
     await createForm.getByRole("button", { name: "콘텐츠 생성" }).click();
     await expect(page).toHaveURL(/\/studio$/);
-    const firstSave = page.waitForResponse((response) => response.url().includes("/draft") && response.request().method() === "PATCH");
     await page.getByRole("button", { name: "FAQ" }).click();
     await page.getByLabel("FAQ 항목").fill("가상 질문 | 가상 답변");
     await page.getByLabel("일반 문단 내용").fill("자동 저장된 가상 문단");
     await page.getByRole("button", { name: "위로 이동" }).last().click();
     await expect(page.getByText("저장 대기")).toBeVisible();
-    expect((await firstSave).status()).toBe(200);
-    await expect(page.getByText("저장 완료")).toBeVisible({ timeout: 9000 });
+    await waitForCompletedAutosave(page, (payload) => {
+      const document = payload.document as { blocks?: Array<{ type?: string; items?: Array<{ question?: string }> }> } | undefined;
+      return document?.blocks?.some((block) => block.type === "faq" && block.items?.[0]?.question === "가상 질문") === true;
+    });
     await page.reload();
     await expect(page.getByLabel("FAQ 항목")).toHaveValue("가상 질문 | 가상 답변");
     await page.getByLabel("변경 요약").fill("가상 첫 버전");
@@ -112,10 +137,8 @@ test.describe.serial("phase one role and UI workflows", () => {
     await expect(page.getByText(/추가 \d+ · 삭제 \d+ · 변경 \d+/)).toBeVisible();
     const second = await context.newPage();
     await second.goto(page.url());
-    const tabSave = page.waitForResponse((response) => response.url().includes("/draft") && response.request().method() === "PATCH");
     await page.getByLabel("제목", { exact: true }).fill("Virtual Studio First Tab");
-    expect((await tabSave).status()).toBe(200);
-    await expect(page.getByText("저장 완료")).toBeVisible({ timeout: 9000 });
+    await waitForCompletedAutosave(page, (payload) => payload.title === "Virtual Studio First Tab");
     await second.getByLabel("제목", { exact: true }).fill("Virtual Studio Second Tab");
     await expect(second.getByText("충돌 발생")).toBeVisible({ timeout: 9000 });
     await expect(second.getByRole("button", { name: "최신본 다시 불러오기" })).toBeVisible();
