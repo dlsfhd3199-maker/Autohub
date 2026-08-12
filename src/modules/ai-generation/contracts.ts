@@ -7,7 +7,7 @@ export const generationPlanSchema = z.object({
   faqCandidates: z.array(z.string().trim().min(1).max(500)).max(10), reviewNotes: z.array(z.string().trim().min(1).max(500)).max(20),
 }).strict();
 export type GenerationPlan = z.infer<typeof generationPlanSchema>;
-export type GenerationContext = { topic: string; primaryKeyword: string; secondaryKeywords: string[]; selectedProduct: Record<string, unknown> | null; knowledge: Record<string, unknown> | null; evidence: Array<{ id: string; title: string; officialUrl: string; evidenceText: string }> };
+export type GenerationContext = { topic: string; primaryKeyword: string; secondaryKeywords: string[]; selectedProduct: Record<string, unknown> | null; knowledge: Record<string, unknown> | null; evidence: Array<{ id: string; title: string; officialUrl: string; evidenceText: string; factId?: string; productSnapshotId?: string; sourceDocumentId?: string; sourceUrl?: string; contentHash?: string; approvedByRole?: string; approvedAt?: string }> };
 export type GeneratedDraft = { document: ContentDocument; reviewItems: Array<{ blockId: string; reason: string; severity: "review"; evidenceSourceIds: string[] }> };
 export type GenerationResult<T> = { value: T; inputTokens: number; outputTokens: number; estimatedCostUsd: number };
 export type GenerationProviderId = "fake" | "openai";

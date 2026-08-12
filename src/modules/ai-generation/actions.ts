@@ -9,6 +9,7 @@ import { generationLimits } from "./config";
 import { createGenerationProvider } from "./provider";
 import { GenerationBudgetError } from "./budget";
 import { OpenAiGenerationError } from "./openai-provider";
+import { getApprovedGenerationContext, hasOnlySnapshotSources } from "./approved-context";
 
 const startSchema = z.object({ brandId: z.string().uuid(), topic: z.string().trim().min(5).max(300), primaryKeyword: z.string().trim().min(1).max(120), secondaryKeywords: z.string().max(1000).transform((value) => value.split(",").map((item) => item.trim()).filter(Boolean)).pipe(z.array(z.string().max(120)).max(20)), productIndex: z.union([z.literal("").transform(() => null), z.string().regex(/^\d{1,2}$/).transform(Number)]), idempotencyKey: z.string().uuid(), evidenceIds: z.array(z.string().uuid()).max(30) });
 const draftSchema = z.object({ brandId: z.string().uuid(), jobId: z.string().uuid() });
@@ -30,7 +31,7 @@ function safeFailure(error: unknown, stage: "plan" | "draft") {
 }
 
 function contextFrom(job: { topic: string; primary_keyword: string; secondary_keywords: unknown; selected_product?: unknown; evidence_snapshot: unknown }, knowledge: Record<string, unknown> | null): GenerationContext {
-  return { topic: job.topic, primaryKeyword: job.primary_keyword, secondaryKeywords: z.array(z.string()).parse(job.secondary_keywords), selectedProduct: job.selected_product ? z.record(z.string(), z.unknown()).parse(job.selected_product) : null, knowledge, evidence: z.array(z.object({ id: z.string().uuid(), title: z.string(), officialUrl: z.string().url(), evidenceText: z.string() })).parse(job.evidence_snapshot) };
+  return { topic: job.topic, primaryKeyword: job.primary_keyword, secondaryKeywords: z.array(z.string()).parse(job.secondary_keywords), selectedProduct: job.selected_product ? z.record(z.string(), z.unknown()).parse(job.selected_product) : null, knowledge, evidence: z.array(z.object({ id: z.string().uuid(), title: z.string(), officialUrl: z.string().url(), evidenceText: z.string(), factId: z.string().uuid().optional(), productSnapshotId: z.string().uuid().optional(), sourceDocumentId: z.string().uuid().optional(), sourceUrl: z.string().url().optional(), contentHash: z.string().regex(/^[a-f0-9]{64}$/).optional(), approvedByRole: z.string().optional(), approvedAt: z.string().optional() }).strict()).parse(job.evidence_snapshot) };
 }
 
 export async function generatePlan(_state: GenerationActionState, formData: FormData): Promise<GenerationActionState> {
@@ -44,12 +45,14 @@ export async function generatePlan(_state: GenerationActionState, formData: Form
     const { count } = await supabase.from("generation_jobs").select("id", { count: "exact", head: true }).gte("created_at", dayStart.toISOString()).neq("status", "cancelled");
     if ((count ?? 0) >= generationLimits.dailyJobLimit) return failure("오늘의 로컬 AI 생성 한도 3건을 모두 사용했습니다.");
     const knowledge = await getBrandKnowledge(input.brandId);
-    const products = z.array(z.record(z.string(), z.unknown())).parse((knowledge.profile as Record<string, unknown> | null)?.product_info ?? []);
+    const approved = await getApprovedGenerationContext(input.brandId);
+    const products = approved.products;
     const selectedProduct = input.productIndex === null ? null : products[input.productIndex];
     if (products.length > 0 && !selectedProduct) return failure("사용할 가상 상품을 선택해 주세요.");
-    const evidence = knowledge.sources.filter((source) => input.evidenceIds.includes(source.id) && source.is_active).map((source) => ({ id: source.id, title: source.title, officialUrl: source.official_url, evidenceText: source.evidence_text }));
+    const evidence = approved.evidence.filter((source) => input.evidenceIds.includes(source.id));
     if (evidence.length !== input.evidenceIds.length) return failure("선택한 근거 중 사용할 수 없는 항목이 있습니다.");
-    const snapshot = evidence;
+    const productSnapshot = selectedProduct ? [{ id: String(selectedProduct.snapshotId), title: String(selectedProduct.name ?? "승인 상품"), officialUrl: String(selectedProduct.officialUrl), evidenceText: JSON.stringify(selectedProduct), productSnapshotId: String(selectedProduct.snapshotId), sourceDocumentId: String(selectedProduct.sourceDocumentId), sourceUrl: String(selectedProduct.sourceUrl), contentHash: String(selectedProduct.contentHash), approvedByRole: String(selectedProduct.approvedByRole), approvedAt: String(selectedProduct.approvedAt) }] : [];
+    const snapshot = [...evidence, ...productSnapshot];
     const provider = createGenerationProvider();
     const { data: job, error: insertError } = await supabase.from("generation_jobs").insert({ brand_id: input.brandId, requested_by: userId, topic: input.topic, primary_keyword: input.primaryKeyword, secondary_keywords: input.secondaryKeywords, selected_product: selectedProduct, status: "planning", idempotency_key: input.idempotencyKey, evidence_snapshot: snapshot, model: provider.id === "openai" ? "gpt-5.6-terra" : "deterministic-fake-v1", generation_provider: provider.id, estimated_cost_usd: 0 }).select("id,topic,primary_keyword,secondary_keywords,selected_product,evidence_snapshot").single();
     if (insertError) return failure(insertError.code === "23505" ? "다른 생성 작업이 진행 중입니다. 완료 후 다시 시도해 주세요." : "생성 작업을 시작하지 못했습니다.");
@@ -83,6 +86,9 @@ export async function generateDraft(_state: GenerationActionState, formData: For
     const consumed = { inputTokens: job.input_tokens, outputTokens: job.output_tokens };
     const result = await provider.generateDraft(contextFrom(job, knowledge.profile as Record<string, unknown> | null), generationPlanSchema.parse(job.plan_json), consumed);
     const draft = generatedDraftSchema.parse(result.value);
+    const serverSnapshot = contextFrom(job, knowledge.profile as Record<string, unknown> | null).evidence;
+    const submittedSourceIds = [...draft.reviewItems.flatMap((item) => item.evidenceSourceIds), ...draft.document.blocks.flatMap((block) => block.sourceIds ?? [])];
+    if (!hasOnlySnapshotSources(submittedSourceIds, serverSnapshot)) return failure("생성 결과에 승인되지 않은 출처가 포함되어 저장을 차단했습니다.");
     const slug = `virtual-ai-${job.id.slice(0, 8)}`;
     const title = draft.document.blocks.find((block) => block.type === "title")?.text ?? job.topic;
     const created = await supabase.rpc("create_content_with_draft", { target_brand_id: input.brandId, content_title: title, content_slug: slug, keyword: job.primary_keyword, document: draft.document });

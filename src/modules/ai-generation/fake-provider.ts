@@ -23,7 +23,10 @@ export class FakeGenerationProvider implements GenerationProvider {
       { id: createUuidV4(), type: "faq", items: [{ question: `${context.primaryKeyword}에서 가장 먼저 확인할 점은 무엇인가요?`, answer: "등록된 공식 근거와 적용 범위를 먼저 확인해야 합니다." }] },
       { id: createUuidV4(), type: "cta", text: "가상 상품의 공식 정보를 확인해 보세요.", label: "가상 상품 자세히 보기", url: "https://example.com/virtual-product" },
     ];
-    if (context.evidence.length) blocks.push({ id: createUuidV4(), type: "sources", items: context.evidence.map((item) => ({ label: item.title, url: item.officialUrl })) });
+    if (sourceIds.length) {
+      for (const block of blocks) if (["answer", "summary", "section", "paragraph", "faq"].includes(block.type)) block.sourceIds = sourceIds;
+      blocks.push({ id: createUuidV4(), type: "sources", sourceIds, items: context.evidence.map((item) => ({ label: item.title, url: item.officialUrl })) });
+    }
     const draft: GeneratedDraft = { document: { schemaVersion: 1, blocks, metadata: { primaryKeyword: context.primaryKeyword, keywords: context.secondaryKeywords, description: `${context.topic}에 대한 가상 AEO/GEO 콘텐츠` } }, reviewItems: context.evidence.length ? [] : [{ blockId: answerId, reason: "직접 연결된 공식 근거가 부족합니다.", severity: "review", evidenceSourceIds: sourceIds }] };
     const usage = { inputTokens: 1600, outputTokens: 1200 };
     return { value: draft, ...usage, estimatedCostUsd: 0 };

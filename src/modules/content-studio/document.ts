@@ -3,7 +3,7 @@ import { createUuidV4 } from "@/modules/content-studio/uuid";
 
 const id = z.string().uuid();
 const text = (max: number) => z.string().trim().min(1).max(max);
-const base = { id, type: z.string() };
+const base = { id, type: z.string(), sourceIds: z.array(id).max(30).optional() };
 const textBlock = <T extends string>(type: T, max = 10000) => z.object({ ...base, type: z.literal(type), text: text(max) }).strict();
 const listItems = z.array(text(500)).min(1).max(30);
 
