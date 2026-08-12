@@ -6,7 +6,7 @@ html, body { margin: 0; background: var(--canvas); color: var(--ink); }
 body { font-family: Arial, "Noto Sans KR", sans-serif; }
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea, summary, a { touch-action: manipulation; }
-:focus-visible { outline: 3px solid #ffbf47; outline-offset: 3px; }
+:focus-visible { outline: 3px solid rgb(47 91 234 / 24%); outline-offset: 2px; }
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 248px 1fr; }
 .sidebar { position: sticky; top: 0; min-height: 100vh; padding: 24px 14px; display: flex; flex-direction: column; color: #dfe8ff; background: var(--navy); }
 .brand-lockup { padding: 0 10px 24px; display: flex; gap: 12px; align-items: center; border-bottom: 1px solid rgb(255 255 255 / 10%); }
@@ -450,16 +450,40 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #c74b4b 
 .remember-field,.consent { display:flex; gap:9px; align-items:flex-start; font-size:13px; color:var(--muted); }
 .remember-field input,.consent input { width:18px; height:18px; }
 .auth-links { display:flex; justify-content:space-between; margin-top:18px; font-size:13px; }
-.registration-page { min-height:100vh; padding:28px max(20px,calc((100vw - 920px)/2)) 60px; background:var(--surface); }
+.registration-page { min-height:100vh; padding:28px max(20px,calc((100vw - 840px)/2)) 60px; background:var(--surface); }
 .registration-page>header { display:flex; justify-content:space-between; align-items:center; margin-bottom:42px; }
+.registration-page .brand-lockup small { color:#52617a; }
 .registration-heading { max-width:680px; margin-bottom:22px; }
 .registration-heading h1 { margin:5px 0 8px; font-size:36px; }
-.registration-card { padding:28px; border:1px solid var(--line); border-radius:16px; background:#fff; box-shadow:var(--shadow-card); }
+.registration-card { width:min(100%,840px); padding:32px; border:1px solid var(--line); border-radius:16px; background:#fff; box-shadow:var(--shadow-card); }
 .role-tabs { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:5px; margin-bottom:24px; border-radius:11px; background:#f0f4fb; }
 .role-tabs button { min-height:44px; border:0; border-radius:8px; background:transparent; font-weight:800; }
 .role-tabs button[aria-selected="true"] { color:var(--primary); background:#fff; box-shadow:0 2px 8px rgb(15 35 75 / 8%); }
 .registration-form { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-.registration-form>.field-help,.registration-form>.consent,.registration-form>.form-error,.registration-form>.primary-button { grid-column:1/-1; }
+.registration-form>.field-wide,.registration-form>.consent,.registration-form>.form-error,.registration-form>.primary-button { grid-column:1/-1; }
+.registration-form .field { min-width:0; display:grid; align-content:start; gap:7px; color:#2d3b55; }
+.registration-form .field-label { font-size:13px; font-weight:750; line-height:1.35; }
+.registration-form input:not([type="checkbox"]) { width:100%; min-width:0; min-height:48px; padding:11px 14px; appearance:none; border:1px solid #c8d2e2; border-radius:9px; color:var(--ink); background:#fff; box-shadow:0 1px 2px rgb(15 35 75 / 3%); transition:border-color .15s ease,box-shadow .15s ease,background .15s ease; }
+.registration-form input:not([type="checkbox"]):hover { border-color:#9eabc0; }
+.registration-form input:not([type="checkbox"]):focus { outline:0; border-color:var(--cobalt); box-shadow:0 0 0 3px rgb(47 91 234 / 16%); }
+.registration-form input::placeholder { color:#8994a8; opacity:1; }
+.registration-form input:disabled { color:#7b8597; background:#f1f4f8; cursor:not-allowed; }
+.registration-form input:-webkit-autofill { -webkit-text-fill-color:var(--ink); box-shadow:0 0 0 1000px #fff inset; caret-color:var(--ink); }
+.registration-form input[type="date"] { color-scheme:light; }
+.registration-form input[type="date"]::-webkit-calendar-picker-indicator { margin:0; cursor:pointer; opacity:.7; }
+.password-input-wrap { position:relative; min-width:0; display:block; }
+.registration-form .password-input-wrap input { padding-right:76px; }
+.registration-form .password-toggle { position:absolute; top:50%; right:6px; min-width:58px; min-height:36px; padding:0 9px; transform:translateY(-50%); border:0; border-radius:7px; color:#3158bc; background:#eef3ff; font-size:12px; font-weight:800; cursor:pointer; }
+.registration-form .password-toggle:hover { background:#e2eaff; }
+.registration-form .password-toggle:focus-visible { outline:3px solid rgb(47 91 234 / 24%); outline-offset:1px; }
+.registration-form .field-help,.registration-form .field-error { margin:0; line-height:1.5; }
+.registration-form .field-help { color:#647087; }
+.registration-form .consent { min-width:0; padding:16px; align-items:flex-start; border:1px solid #d5deed; border-radius:10px; background:#f8faff; color:#344159; }
+.registration-form .consent input { flex:0 0 auto; margin:2px 0 0; accent-color:var(--cobalt); }
+.registration-form .consent span { min-width:0; display:grid; gap:4px; }
+.registration-form .consent strong { font-size:13px; }
+.registration-form .consent small { color:var(--muted); font-size:11px; line-height:1.5; }
+.registration-submit { min-height:48px; }
 .account-status-page { min-height:100vh; display:grid; place-items:center; padding:20px; background:var(--surface); }
 .account-status-page .state-card,.account-status-page .auth-card { width:min(100%,560px); }
 .account-status-mark { display:grid; place-items:center; width:58px; height:58px; margin:0 auto 16px; border-radius:50%; background:#eaf1ff; color:var(--primary); font-size:24px; font-weight:900; }
@@ -553,7 +577,7 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #c74b4b 
   .auth-brand-panel ul { display: none; }
   .auth-form-panel { min-height: auto; padding: 24px 16px 40px; }
   .registration-form,.application-review-form { grid-template-columns:1fr; }
-  .registration-form>.field-help,.registration-form>.consent,.registration-form>.form-error,.registration-form>.primary-button,.application-review-form .success-message,.application-review-form .form-error { grid-column:auto; }
+  .registration-form>.field-wide,.registration-form>.consent,.registration-form>.form-error,.registration-form>.primary-button,.application-review-form .success-message,.application-review-form .form-error { grid-column:auto; }
   .application-card dl { grid-template-columns:1fr; }
 }
 @media (max-width: 430px) {
@@ -573,4 +597,9 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #c74b4b 
   .block-editor header { align-items: flex-start; flex-direction: column; }
   .block-editor header span { max-width: 100%; flex-wrap: wrap; }
   .auth-card { padding: 26px 22px; }
+  .registration-page { padding:18px 10px 40px; overflow-x:hidden; }
+  .registration-page>header { align-items:flex-start; gap:14px; margin-bottom:30px; }
+  .registration-page>header .brand-lockup { min-width:0; padding-left:0; }
+  .registration-heading h1 { font-size:30px; }
+  .registration-card { padding:20px 16px; }
 }

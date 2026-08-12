@@ -17,8 +17,8 @@ const common = z.object({
 });
 
 export const advertiserApplicationSchema = z.intersection(common, z.object({
-  role: z.literal("advertiser"), organizationName: z.string().trim().min(2).max(160), brandName: z.string().trim().min(2).max(160),
+  role: z.literal("advertiser"), organizationName: z.string().trim().min(2, "회사명은 2자 이상 입력해 주세요.").max(160, "회사명은 160자 이하로 입력해 주세요."), brandName: z.string().trim().min(2, "브랜드명은 2자 이상 입력해 주세요.").max(160, "브랜드명은 160자 이하로 입력해 주세요."),
   storefrontUrl: z.string().url("올바른 자사몰 URL을 입력해 주세요.").max(2048).refine((value) => ["http:", "https:"].includes(new URL(value).protocol), "HTTP 또는 HTTPS URL만 사용할 수 있습니다."),
 }));
-export const marketerApplicationSchema = z.intersection(common, z.object({ role: z.literal("ae"), organizationName: z.string().trim().min(2).max(160), joinCode: z.string().trim().min(12, "가입 코드를 확인해 주세요.").max(200), joinedOn: z.union([z.literal(""), z.string().date()]).optional() }));
+export const marketerApplicationSchema = z.intersection(common, z.object({ role: z.literal("ae"), organizationName: z.string().trim().min(2, "소속 센터 또는 대행사를 2자 이상 입력해 주세요.").max(160, "소속 정보는 160자 이하로 입력해 주세요."), joinCode: z.string().trim().min(12, "가입 코드를 확인해 주세요.").max(200, "가입 코드를 확인해 주세요."), joinedOn: z.union([z.literal(""), z.string().date("올바른 입사일을 입력해 주세요.")]).optional() }));
 export const hashJoinCode = (value: string) => createHash("sha256").update(value.normalize("NFKC")).digest("hex");
