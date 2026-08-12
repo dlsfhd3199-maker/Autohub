@@ -3,6 +3,14 @@ import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
 function localSupabaseEnv(): Record<string, string> {
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY && process.env.E2E_SUPABASE_SERVICE_ROLE_KEY) {
+    return {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3000",
+      E2E_SUPABASE_SERVICE_ROLE_KEY: process.env.E2E_SUPABASE_SERVICE_ROLE_KEY,
+    };
+  }
   try {
     const command = path.join(process.cwd(), "node_modules", "supabase", "dist", "supabase.js");
     const output = execFileSync(process.execPath, [command, "status", "-o", "env"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
