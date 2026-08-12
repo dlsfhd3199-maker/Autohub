@@ -494,6 +494,11 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #c74b4b 
 .one-time-credentials span { min-width:0; display:grid; gap:5px; padding:12px; border-radius:8px; background:white; }
 .one-time-credentials code { overflow-wrap:anywhere; }
 .one-time-credentials button { min-height:40px; border:1px solid var(--line); border-radius:8px; color:var(--cobalt); background:white; }
+.confirm-modal-backdrop { position:fixed; z-index:80; inset:0; display:grid; place-items:center; padding:20px; background:rgb(7 18 42 / 58%); }
+.confirm-modal { width:min(100%,560px); max-height:calc(100vh - 40px); overflow:auto; padding:24px; border:1px solid var(--line); border-radius:14px; background:#fff; box-shadow:0 24px 70px rgb(13 34 77 / 28%); }
+.confirm-modal h2 { margin:0 0 10px; }
+.confirm-modal>p { margin:0 0 20px; color:var(--muted); line-height:1.65; }
+.confirm-modal .form-actions { display:flex; justify-content:flex-end; gap:10px; }
 .password-change-form { display:grid; gap:12px; margin-top:22px; }
 .password-change-form label { display:grid; gap:7px; font-size:13px; font-weight:750; }
 .password-change-form input { width:100%; min-height:48px; padding:11px 14px; border:1px solid #c8d2e2; border-radius:9px; background:#fff; }

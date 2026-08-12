@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdvertiserAccountControls } from "@/components/advertiser-account-controls";
 import { AdvertiserAccountForm } from "@/components/advertiser-account-form";
+import { AdvertiserReactivationControl } from "@/components/advertiser-reactivation-control";
 import { AssignmentForm, UnassignButton } from "@/components/assignment-form";
 import { Icon } from "@/components/icons";
 import { getWorkspaceContext } from "@/modules/auth/workspace";
@@ -59,8 +60,9 @@ export default async function PeoplePage({ searchParams }: { searchParams: Param
             const status = statusByUser.get(row.user_id);
             return <li key={row.id}>
               <span className={`person-avatar role-${row.role}`}>{name.slice(0, 1)}</span>
-              <span className="person-copy"><strong>{name}</strong><small><span className={`role-badge role-${row.role}`}>{roleText(row.role)}</span>{status?.password_change_required ? "비밀번호 변경 필요" : status?.status === "suspended" ? "비활성" : "배정됨"}{status?.display_job_title ? ` · ${status.display_job_title}` : ""}</small></span>
+              <span className="person-copy"><strong>{name}</strong><small><span className={`role-badge role-${row.role}`}>{roleText(row.role)}</span>{status?.status === "manual_cleanup_required" ? "수동 정리 필요" : status?.status === "suspended" ? "비활성" : status?.password_change_required ? "비밀번호 변경 필요" : "활성"}{status?.display_job_title ? ` · ${status.display_job_title}` : ""}</small></span>
               {context.role === "agency_admin" && row.role === "advertiser" && status?.status !== "suspended" ? <AdvertiserAccountControls brandId={brandId} userId={row.user_id} /> : null}
+              {context.role === "agency_admin" && row.role === "advertiser" && status?.status === "suspended" ? <AdvertiserReactivationControl brandId={brandId} userId={row.user_id} /> : null}
               {context.role === "agency_admin" ? <UnassignButton organizationId={context.organizationId} brandId={brandId} userId={row.user_id} role={row.role} personName={name} /> : null}
             </li>;
           })}</ul>}

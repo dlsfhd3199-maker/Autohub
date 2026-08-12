@@ -34,7 +34,7 @@ export async function listAdvertiserAccountStatuses(brandId: string) {
   if (!userIds.length) return [];
   const { data, error } = await supabase
     .from("user_account_statuses")
-    .select("user_id,status,password_change_required,display_job_title,disabled_at")
+    .select("user_id,status,password_change_required,display_job_title,disabled_at,safe_reason")
     .in("user_id", userIds);
   if (error) throw error;
   return data ?? [];

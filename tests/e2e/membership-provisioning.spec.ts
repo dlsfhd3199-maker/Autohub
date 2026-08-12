@@ -57,4 +57,87 @@ test.describe.serial("마케터 가입과 광고주 내부 계정", () => {
     await page.goto("/workspace/ai-settings");
     await expect(page.getByRole("heading", { name: "시스템 AI 공급자 설정 권한이 없습니다" })).toBeVisible();
   });
+
+  test("관리자만 비활성 광고주를 재활성화하고 새 비밀번호 변경을 강제한다", async ({ browser }) => {
+    test.setTimeout(150_000);
+    const suffix = Date.now();
+    const email = `advertiser-reactivation-${suffix}@example.com`;
+    const displayName = `Virtual 복구 담당자 ${suffix}`;
+    const initialPassword = "Virtual-Initial-Changed-42!";
+    const finalPassword = "Virtual-Reactivated-Changed-42!";
+
+    const marketerContext = await browser.newContext();
+    const marketerPage = await marketerContext.newPage();
+    await login(marketerPage, e2eAccounts.ae.email, e2eAccounts.ae.password);
+    await marketerPage.waitForURL(/\/workspace/);
+    await marketerPage.goto("/workspace/people?brandId=32000000-0000-4000-8000-000000000001");
+    await marketerPage.getByLabel("광고주 담당자명").fill(displayName);
+    await marketerPage.getByLabel("이메일", { exact: true }).fill(email);
+    await marketerPage.getByRole("button", { name: "광고주 계정 생성" }).click();
+    const issued = marketerPage.locator(".one-time-credentials");
+    await expect(issued).toBeVisible();
+    const firstTemporaryPassword = await issued.locator("code").nth(1).textContent();
+    expect(firstTemporaryPassword).toBeTruthy();
+    await marketerPage.reload();
+    await expect(marketerPage.locator(".one-time-credentials")).toHaveCount(0);
+    await expect(marketerPage.getByRole("button", { name: "계정 재활성화" })).toHaveCount(0);
+
+    const advertiserContext = await browser.newContext();
+    const advertiserPage = await advertiserContext.newPage();
+    await login(advertiserPage, email, firstTemporaryPassword!);
+    await expect(advertiserPage).toHaveURL(/\/change-password/);
+    await advertiserPage.getByLabel("새 비밀번호", { exact: true }).fill(initialPassword);
+    await advertiserPage.getByLabel("새 비밀번호 확인", { exact: true }).fill(initialPassword);
+    await advertiserPage.getByRole("button", { name: "비밀번호 변경" }).click();
+    await expect(advertiserPage).toHaveURL(/\/workspace/);
+
+    const adminContext = await browser.newContext();
+    const adminPage = await adminContext.newPage();
+    await login(adminPage, e2eAccounts.admin.email, e2eAccounts.admin.password);
+    await adminPage.waitForURL(/\/workspace/);
+    await adminPage.goto("/workspace/people?brandId=32000000-0000-4000-8000-000000000001");
+    const accountRow = adminPage.locator(".assignment-list li").filter({ hasText: displayName });
+    await accountRow.getByRole("button", { name: "계정 비활성화" }).click();
+    await expect(accountRow).toContainText("비활성");
+
+    await advertiserPage.goto("/workspace");
+    await expect(advertiserPage).toHaveURL(/account-status\?status=suspended/);
+    const suspendedRow = adminPage.locator(".assignment-list li").filter({ hasText: displayName });
+    await suspendedRow.getByRole("button", { name: "계정 재활성화" }).click();
+    await expect(adminPage.getByRole("dialog", { name: "광고주 계정 재활성화" })).toBeVisible();
+    await adminPage.getByRole("button", { name: "재활성화 및 임시 비밀번호 발급" }).click();
+    const recoveryCredentials = adminPage.getByRole("dialog").locator(".one-time-credentials");
+    await expect(recoveryCredentials).toBeVisible();
+    const newTemporaryPassword = await recoveryCredentials.locator("code").nth(1).textContent();
+    expect(newTemporaryPassword).toBeTruthy();
+    expect(newTemporaryPassword).not.toBe(firstTemporaryPassword);
+    await adminPage.reload();
+    await expect(adminPage.locator(".one-time-credentials")).toHaveCount(0);
+
+    await advertiserContext.close();
+    const oldPasswordContext = await browser.newContext();
+    const oldPasswordPage = await oldPasswordContext.newPage();
+    await login(oldPasswordPage, email, initialPassword);
+    await expect(oldPasswordPage).toHaveURL(/login\?error=invalid/);
+    await oldPasswordContext.close();
+
+    const recoveredContext = await browser.newContext();
+    const recoveredPage = await recoveredContext.newPage();
+    await login(recoveredPage, email, newTemporaryPassword!);
+    await expect(recoveredPage).toHaveURL(/\/change-password/);
+    await recoveredPage.goto("/workspace");
+    await expect(recoveredPage).toHaveURL(/\/change-password/);
+    await recoveredPage.getByLabel("새 비밀번호", { exact: true }).fill(finalPassword);
+    await recoveredPage.getByLabel("새 비밀번호 확인", { exact: true }).fill(finalPassword);
+    await recoveredPage.getByRole("button", { name: "비밀번호 변경" }).click();
+    await expect(recoveredPage).toHaveURL(/\/workspace/);
+    await recoveredPage.goto("/workspace/content");
+    await expect(recoveredPage.getByText("새 콘텐츠", { exact: true })).toHaveCount(0);
+    await recoveredPage.goto("/workspace/ai-settings");
+    await expect(recoveredPage.getByRole("heading", { name: "시스템 AI 공급자 설정 권한이 없습니다" })).toBeVisible();
+
+    await marketerContext.close();
+    await adminContext.close();
+    await recoveredContext.close();
+  });
 });
