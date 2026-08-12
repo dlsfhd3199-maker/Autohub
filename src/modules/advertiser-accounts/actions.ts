@@ -1,10 +1,11 @@
 "use server";
 
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireBrandPermission } from "@/modules/authorization/server";
 import { accountUserSchema, advertiserAccountSchema } from "./schemas";
+import { isProvisioningUserOwnedByRequest } from "./ownership";
 
 export type ProvisionState = {
   ok: boolean;
@@ -20,19 +21,39 @@ export async function createAdvertiserAccount(
   formData: FormData,
 ): Promise<ProvisionState> {
   let createdId: string | undefined;
+  let createdByThisRequest = false;
+  let requestContext: { id: string; brandId: string; emailHash: string } | undefined;
   try {
     const input = advertiserAccountSchema.parse(Object.fromEntries(formData));
     const { supabase } = await requireBrandPermission(input.brandId, "edit");
     const admin = createAdminClient();
+    const emailHash = createHash("sha256").update(input.email).digest("hex");
+    requestContext = { id: input.idempotencyKey, brandId: input.brandId, emailHash };
+    const record = async (status: string, userId?: string, safeError?: string) => supabase.rpc("record_advertiser_provisioning_event", {
+      request_id: input.idempotencyKey, target_brand_id: input.brandId, target_email_hash: emailHash,
+      target_status: status, target_auth_user_id: userId ?? null, target_safe_error: safeError ?? null,
+    });
+    const started = await record("provisioning_started");
+    if (started.error) throw started.error;
+    if (started.data === "assignment_completed") return { ok: true, message: "이미 처리된 요청입니다." };
     const password = createTemporaryPassword();
     const created = await admin.auth.admin.createUser({
       email: input.email,
       password,
       email_confirm: true,
-      user_metadata: { display_name: input.displayName, provisioned_as: "advertiser" },
+      user_metadata: { display_name: input.displayName, provisioned_as: "advertiser", provisioning_request_id: input.idempotencyKey },
     });
-    if (created.error || !created.data.user) throw new Error("CREATE_FAILED");
-    createdId = created.data.user.id;
+    if (created.error || !created.data.user) {
+      const listed = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const owned = listed.data?.users.find((user) => isProvisioningUserOwnedByRequest(user, input.email, input.idempotencyKey));
+      if (!owned) throw new Error("CREATE_FAILED");
+      createdId = owned.id;
+    } else {
+      createdId = created.data.user.id;
+      createdByThisRequest = true;
+    }
+    const authRecorded = await record("auth_user_created", createdId);
+    if (authRecorded.error) throw authRecorded.error;
     const finalized = await supabase.rpc("finalize_advertiser_provisioning", {
       target_user_id: createdId,
       target_brand_id: input.brandId,
@@ -41,11 +62,25 @@ export async function createAdvertiserAccount(
       target_method: "temporary_credentials",
     });
     if (finalized.error) throw finalized.error;
+    const completed = await record("assignment_completed", createdId);
+    if (completed.error) throw completed.error;
     revalidatePath("/workspace/people");
     return { ok: true, message: "광고주 계정을 생성했습니다.", email: input.email, temporaryPassword: password };
   } catch {
-    if (createdId) {
-      try { await createAdminClient().auth.admin.deleteUser(createdId); } catch { /* best-effort rollback */ }
+    if (createdId && requestContext) {
+      const admin = createAdminClient();
+      const owned = await admin.auth.admin.getUserById(createdId);
+      const ownershipMatches = isProvisioningUserOwnedByRequest(owned.data.user, owned.data.user?.email ?? "", requestContext.id);
+      if (ownershipMatches) {
+        const deleted = await admin.auth.admin.deleteUser(createdId);
+        try {
+          const { supabase } = await requireBrandPermission(requestContext.brandId, "edit");
+          await supabase.rpc("record_advertiser_provisioning_event", { request_id:requestContext.id,target_brand_id:requestContext.brandId,target_email_hash:requestContext.emailHash,target_status:deleted.error?"compensation_failed":"compensation_succeeded",target_auth_user_id:deleted.error?createdId:null,target_safe_error:deleted.error?"MANUAL_CLEANUP_REQUIRED":null });
+        } catch { /* never expose compensation internals */ }
+        if (deleted.error) return { ok:false, message:"계정 생성이 완료되지 않았습니다. 관리자 수동 정리가 필요합니다." };
+      } else if (createdByThisRequest) {
+        return { ok:false, message:"계정 생성 상태를 확인할 수 없습니다. 관리자 수동 정리가 필요합니다." };
+      }
     }
     return { ok: false, message: "계정을 생성할 수 없습니다. 권한, 브랜드와 이메일을 확인해 주세요." };
   }
