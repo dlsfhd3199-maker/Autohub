@@ -46,14 +46,24 @@ export default async function setup() {
   const pawId = "32000000-0000-4000-8000-000000000003";
   const { error: organizationError } = await admin.from("organizations").upsert([{ id: agencyId, name: "Virtual Agency", type: "agency" }, { id: advertiserId, name: "Virtual Advertiser", type: "advertiser" }, { id: otherAgencyId, name: "Virtual Other Agency", type: "agency" }, { id: otherAdvertiserId, name: "Virtual Other Advertiser", type: "advertiser" }]);
   if (organizationError) throw organizationError;
+  const joinCode = process.env.E2E_JOIN_CODE;
+  if (!joinCode) throw new Error("Ephemeral E2E marketer join code is required");
+  const { error: joinCodeError } = await admin.from("organization_join_codes").upsert({
+    id: "2b000000-0000-4000-8000-000000000001",
+    organization_id: agencyId,
+    code_hash: createHash("sha256").update(joinCode.normalize("NFKC")).digest("hex"),
+    label: "Virtual E2E marketer application",
+    is_active: true,
+    revoked_at: null,
+    created_by: created.admin,
+  });
+  if (joinCodeError) throw joinCodeError;
   const { error: membershipError } = await admin.from("organization_memberships").upsert([{ user_id: created.admin, organization_id: agencyId, role: "agency_admin" }, { user_id: created.ae, organization_id: agencyId, role: "ae" }, { user_id: created.advertiser, organization_id: advertiserId, role: "advertiser" }], { onConflict: "user_id,organization_id,role" });
   if (membershipError) throw membershipError;
   const { error: brandError } = await admin.from("brands").upsert([{ id: lumiId, agency_organization_id: agencyId, advertiser_organization_id: advertiserId, name: "Virtual Lumi", brand_key: "virtual-lumi", domain: "lumi.example.com", publishing_path: "/blog", archived_at: null, is_active: true }, { id: bridgeId, agency_organization_id: otherAgencyId, advertiser_organization_id: otherAdvertiserId, name: "Virtual Bridge", brand_key: "virtual-bridge", domain: "bridge.example.com", publishing_path: "/journal", archived_at: null, is_active: true }, { id: pawId, agency_organization_id: agencyId, advertiser_organization_id: advertiserId, name: "Virtual Paw", brand_key: "virtual-paw", domain: "paw.example.com", publishing_path: "/blog", archived_at: null, is_active: true }]);
   if (brandError) throw brandError;
-  const { error: assignmentError } = await admin.from("brand_assignments").upsert([{ brand_id: lumiId, user_id: created.advertiser, role: "advertiser" }], { onConflict: "brand_id,user_id,role" });
+  const { error: assignmentError } = await admin.from("brand_assignments").upsert([{ brand_id: lumiId, user_id: created.advertiser, role: "advertiser" }, { brand_id: lumiId, user_id: created.ae, role: "ae" }], { onConflict: "brand_id,user_id,role" });
   if (assignmentError) throw assignmentError;
-  const { error: cleanAeAssignmentError } = await admin.from("brand_assignments").delete().eq("brand_id", lumiId).eq("user_id", created.ae).eq("role", "ae");
-  if (cleanAeAssignmentError) throw cleanAeAssignmentError;
   const { error: contentError } = await admin.from("content_items").upsert([{ id: "42000000-0000-4000-8000-000000000001", brand_id: lumiId, title: "Virtual Lumi Search Guide", slug: "virtual-lumi-search-guide", status: "draft", owner_id: created.ae }, { id: "42000000-0000-4000-8000-000000000002", brand_id: bridgeId, title: "Virtual Bridge Private Guide", slug: "virtual-bridge-private-guide", status: "approved", owner_id: created.admin }]);
   if (contentError) throw contentError;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;

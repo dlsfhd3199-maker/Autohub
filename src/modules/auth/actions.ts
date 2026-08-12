@@ -22,8 +22,9 @@ export async function signIn(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) redirect("/login?error=invalid");
-  const { data: account } = await supabase.from("user_account_statuses").select("status").eq("user_id", (await supabase.auth.getClaims()).data?.claims?.sub ?? "").maybeSingle();
+  const { data: account } = await supabase.from("user_account_statuses").select("status,password_change_required").eq("user_id", (await supabase.auth.getClaims()).data?.claims?.sub ?? "").maybeSingle();
   if (account?.status !== "approved") redirect(`/account-status?status=${account?.status ?? "pending"}`);
+  if (account.password_change_required) redirect("/change-password");
   redirect("/workspace");
 }
 

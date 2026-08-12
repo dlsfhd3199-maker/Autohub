@@ -5,6 +5,7 @@ import path from "node:path";
 
 const cli = path.join(process.cwd(), "node_modules", "@playwright", "test", "cli.js");
 const publishingKey = process.env.E2E_PUBLISHING_KEY ?? `ahp_${randomBytes(32).toString("base64url")}`;
+const marketerJoinCode = process.env.E2E_JOIN_CODE ?? randomBytes(24).toString("base64url");
 const supabaseCli = path.join(process.cwd(), "node_modules", "supabase", "dist", "supabase.js");
 const isolatedRoot = path.join(process.cwd(), "supabase", ".temp", "playwright-isolated");
 rmSync(isolatedRoot, { recursive: true, force: true });
@@ -58,6 +59,7 @@ const env = {
   E2E_ISOLATED_SUPABASE: "true",
   NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3000",
   E2E_PUBLISHING_KEY: publishingKey,
+  E2E_JOIN_CODE: marketerJoinCode,
   CONTENT_HUB_API_URL: "http://127.0.0.1:3000",
   CONTENT_HUB_PUBLISHING_KEY: publishingKey,
   CONTENT_HUB_BRAND_KEY: "virtual-lumi",

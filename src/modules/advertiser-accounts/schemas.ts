@@ -1,0 +1,1 @@
+import{z}from"zod";export const advertiserAccountSchema=z.object({brandId:z.uuid(),displayName:z.string().trim().min(2,"담당자명을 2자 이상 입력해 주세요.").max(100),email:z.string().trim().toLowerCase().email("올바른 이메일을 입력해 주세요.").max(320),jobTitle:z.string().trim().max(100).optional().default("")});export const accountUserSchema=z.object({userId:z.uuid(),brandId:z.uuid()});

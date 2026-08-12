@@ -235,7 +235,7 @@ button:disabled { cursor: not-allowed; opacity: .58; }
 .management-form label, .inline-edit-form label, .filter-grid label, .assignment-form label { gap: 7px; color: #344159; font-size: 12px; }
 .management-form input, .management-form select, .inline-edit-form input, .filter-grid input, .filter-grid select, .assignment-form select, .people-filter input, .people-filter select { min-height: 42px; border-color: var(--line-strong); }
 input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #c74b4b !important; box-shadow: 0 0 0 3px rgb(199 75 75 / 10%); }
-.field-help { color: #758095; font-size: 11px; font-weight: 500; }
+.field-help { color: #5f6b80; font-size: 11px; font-weight: 500; }
 .field-error { color: var(--danger); font-size: 11px; font-weight: 650; }
 .form-error, .form-success { grid-column: 1 / -1; margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 12px; }
 .form-success { color: var(--success); background: #ebf7ef; }
@@ -460,6 +460,7 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #c74b4b 
 .role-tabs button { min-height:44px; border:0; border-radius:8px; background:transparent; font-weight:800; }
 .role-tabs button[aria-selected="true"] { color:var(--primary); background:#fff; box-shadow:0 2px 8px rgb(15 35 75 / 8%); }
 .registration-form { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.registration-form-single { grid-template-columns:1fr; }
 .registration-form>.field-wide,.registration-form>.consent,.registration-form>.form-error,.registration-form>.primary-button { grid-column:1/-1; }
 .registration-form .field { min-width:0; display:grid; align-content:start; gap:7px; color:#2d3b55; }
 .registration-form .field-label { font-size:13px; font-weight:750; line-height:1.35; }
@@ -484,6 +485,19 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #c74b4b 
 .registration-form .consent strong { font-size:13px; }
 .registration-form .consent small { color:var(--muted); font-size:11px; line-height:1.5; }
 .registration-submit { min-height:48px; }
+.advertiser-provision { margin-bottom:16px; }
+.advertiser-provision .management-form { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; align-items:end; }
+.advertiser-provision .section-heading p { margin:5px 0 0; color:var(--muted); font-size:12px; }
+.one-time-credentials { margin-top:16px; padding:16px; border:1px solid #d6b45b; border-radius:10px; background:#fffaf0; }
+.one-time-credentials>p { color:#684f19; font-size:12px; }
+.one-time-credentials>div { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.one-time-credentials span { min-width:0; display:grid; gap:5px; padding:12px; border-radius:8px; background:white; }
+.one-time-credentials code { overflow-wrap:anywhere; }
+.one-time-credentials button { min-height:40px; border:1px solid var(--line); border-radius:8px; color:var(--cobalt); background:white; }
+.password-change-form { display:grid; gap:12px; margin-top:22px; }
+.password-change-form label { display:grid; gap:7px; font-size:13px; font-weight:750; }
+.password-change-form input { width:100%; min-height:48px; padding:11px 14px; border:1px solid #c8d2e2; border-radius:9px; background:#fff; }
+.password-change-form .password-input-wrap input { padding-right:76px; }
 .account-status-page { min-height:100vh; display:grid; place-items:center; padding:20px; background:var(--surface); }
 .account-status-page .state-card,.account-status-page .auth-card { width:min(100%,560px); }
 .account-status-mark { display:grid; place-items:center; width:58px; height:58px; margin:0 auto 16px; border-radius:50%; background:#eaf1ff; color:var(--primary); font-size:24px; font-weight:900; }
@@ -577,6 +591,7 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #c74b4b 
   .auth-brand-panel ul { display: none; }
   .auth-form-panel { min-height: auto; padding: 24px 16px 40px; }
   .registration-form,.application-review-form { grid-template-columns:1fr; }
+  .advertiser-provision .management-form,.one-time-credentials>div { grid-template-columns:1fr; }
   .registration-form>.field-wide,.registration-form>.consent,.registration-form>.form-error,.registration-form>.primary-button,.application-review-form .success-message,.application-review-form .form-error { grid-column:auto; }
   .application-card dl { grid-template-columns:1fr; }
 }
@@ -603,3 +618,4 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #c74b4b 
   .registration-heading h1 { font-size:30px; }
   .registration-card { padding:20px 16px; }
 }
+.advertiser-account-controls{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}.advertiser-account-controls form{margin:0}.one-time-inline{flex-basis:100%;padding:.75rem;border:1px solid #e7c45b;border-radius:.75rem;background:#fff9e8}.one-time-inline code{display:block;overflow-wrap:anywhere;margin:.4rem 0}.one-time-inline button{min-height:2.75rem}
