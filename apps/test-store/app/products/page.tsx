@@ -1,0 +1,2 @@
+import Link from "next/link";import { virtualProducts } from "../../lib/catalog";
+export default function ProductsPage(){return <main><section className="store-info-page"><p className="eyebrow">VIRTUAL CATALOG</p><h1>가상 상품</h1><div className="product-grid">{virtualProducts.map((product)=><article key={product.slug}><span className="category-label">{product.category}</span><h2><Link href={`/products/${product.slug}`}>{product.name}</Link></h2><p>{product.description}</p><strong>{product.price.toLocaleString("ko-KR")}원</strong></article>)}</div></section></main>}

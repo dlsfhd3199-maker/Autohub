@@ -2,7 +2,9 @@
 
 # dependencies
 /node_modules
+**/node_modules/
 /.pnpm-virtual/
+/.pnpm-store/
 /.pnp
 .pnp.*
 .yarn/*
@@ -15,9 +17,11 @@
 /coverage
 /playwright-report/
 /test-results/
+/artifacts/
 
 # next.js
 /.next/
+**/.next/
 /out/
 
 # production

@@ -7,7 +7,7 @@ async function login(page: import("@playwright/test").Page, account: { email: st
   await page.getByLabel("이메일").fill(account.email);
   await page.getByLabel("비밀번호").fill(account.password);
   await page.getByRole("button", { name: "로그인" }).click();
-  await expect(page).toHaveURL(/\/workspace\/brands/);
+  await expect(page).toHaveURL(/\/workspace(?:\/brands)?$/);
 }
 
 async function expectNoSeriousViolations(page: import("@playwright/test").Page) {

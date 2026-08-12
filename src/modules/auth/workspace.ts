@@ -10,11 +10,5 @@ export async function getWorkspaceContext() {
   if (error || !memberships?.[0]) throw error ?? new Error("Workspace membership not found");
   const membership = memberships[0];
   const organization = Array.isArray(membership.organizations) ? membership.organizations[0] : membership.organizations;
-  return {
-    userId,
-    displayName: profile?.display_name ?? "사용자",
-    role: membership.role as WorkspaceRole,
-    organizationId: membership.organization_id,
-    organizationName: organization?.name ?? "워크스페이스",
-  };
+  return { userId, displayName: profile?.display_name ?? "사용자", role: membership.role as WorkspaceRole, organizationId: membership.organization_id, organizationName: organization?.name ?? "워크스페이스" };
 }

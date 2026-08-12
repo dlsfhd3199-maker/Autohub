@@ -1,0 +1,2 @@
+import { virtualOrganization } from "../../lib/catalog";
+export default function AboutPage(){const jsonLd={"@context":"https://schema.org","@type":"Organization",...virtualOrganization};return <main><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(jsonLd)}}/><section className="store-info-page"><p className="eyebrow">VIRTUAL BRAND</p><h1>Virtual Store 소개</h1><p>{virtualOrganization.description}</p><h2>공식 정보 원칙</h2><p>가상 상품 정보와 공식 근거만 수집 테스트에 사용합니다. 실제 고객·주문·결제 정보는 존재하지 않습니다.</p></section></main>}

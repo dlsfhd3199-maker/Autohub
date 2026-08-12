@@ -22,6 +22,24 @@ export async function listBrandAssignments(brandId: string) {
   return data ?? [];
 }
 
+export async function listAdvertiserAccountStatuses(brandId: string) {
+  const { supabase } = await requireBrandPermission(brandId, "read");
+  const { data: assignments, error: assignmentError } = await supabase
+    .from("brand_assignments")
+    .select("user_id")
+    .eq("brand_id", brandId)
+    .eq("role", "advertiser");
+  if (assignmentError) throw assignmentError;
+  const userIds = (assignments ?? []).map((row) => row.user_id);
+  if (!userIds.length) return [];
+  const { data, error } = await supabase
+    .from("user_account_statuses")
+    .select("user_id,status,password_change_required,display_job_title,disabled_at,safe_reason")
+    .in("user_id", userIds);
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function listAssignablePeople(brandId: string) {
   const { supabase } = await requireBrandPermission(brandId, "manage");
   const { data: brand, error: brandError } = await supabase.from("brands")
