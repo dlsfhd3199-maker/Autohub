@@ -22,25 +22,27 @@ export function ContentStudio({ contentId, initialTitle, initialKeyword, initial
   const [serverConflict, setServerConflict] = useState<{ revision: number; title: string; document: ContentDocument; savedAt: string } | null>(null);
   const persisted = useRef(JSON.stringify({ title: initialTitle, keyword: initialKeyword, document: initialDraft?.body_json }));
   const latest = useRef({ title, keyword, document }); latest.current = { title, keyword, document };
+  const revisionRef = useRef(revision); revisionRef.current = revision;
+  const statusRef = useRef(status); statusRef.current = status;
   const saving = useRef(false); const queued = useRef(false);
 
   useEffect(() => { if (!initialDraft) return; setTitle(initialTitle); setKeyword(initialKeyword); setDocument(initialDraft.body_json); setRevision(initialDraft.revision); setSavedAt(initialDraft.saved_at); persisted.current = JSON.stringify({ title: initialTitle, keyword: initialKeyword, document: initialDraft.body_json }); setStatus("saved"); }, [initialDraft?.id, initialDraft, initialKeyword, initialTitle]);
 
   const save = useCallback(async () => {
-    if (!canEdit || saving.current || status === "conflict") { if (saving.current) queued.current = true; return; }
+    if (!canEdit || saving.current || statusRef.current === "conflict") { if (saving.current) queued.current = true; return; }
     const snapshot = latest.current; const serialized = JSON.stringify(snapshot);
     if (serialized === persisted.current) { setStatus("saved"); return; }
     const parsed = contentDocumentSchema.safeParse(snapshot.document); if (!parsed.success) { setStatus("error"); return; }
     saving.current = true; setStatus("saving");
     try {
-      const response = await fetch(`/api/content/${contentId}/draft`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ revision, title: snapshot.title, primaryKeyword: snapshot.keyword, document: parsed.data }) });
+      const response = await fetch(`/api/content/${contentId}/draft`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ revision: revisionRef.current, title: snapshot.title, primaryKeyword: snapshot.keyword, document: parsed.data }) });
       const result = await response.json();
       if (response.status === 409) { setServerConflict({ revision: result.revision, title: result.title, document: result.document, savedAt: result.savedAt }); setStatus("conflict"); return; }
       if (!response.ok) throw new Error("save failed");
-      setRevision(result.revision); setSavedAt(result.savedAt); persisted.current = serialized;
+      revisionRef.current = result.revision; setRevision(result.revision); setSavedAt(result.savedAt); persisted.current = serialized;
       setStatus(JSON.stringify(latest.current) === serialized ? "saved" : "dirty");
     } catch { setStatus("error"); } finally { saving.current = false; if (queued.current) { queued.current = false; window.setTimeout(() => void save(), 0); } }
-  }, [canEdit, contentId, revision, status]);
+  }, [canEdit, contentId]);
 
   useEffect(() => { if (!canEdit) return; const current = JSON.stringify({ title, keyword, document }); if (current === persisted.current || status === "conflict") return; setStatus("dirty"); const timer = window.setTimeout(() => void save(), AUTOSAVE_DELAY_MS); return () => window.clearTimeout(timer); }, [title, keyword, document, canEdit, save, status]);
   useEffect(() => { const warn = (event: BeforeUnloadEvent) => { if (status === "dirty" || status === "saving" || status === "error" || status === "conflict") event.preventDefault(); }; window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn); }, [status]);

@@ -36,6 +36,14 @@ export async function resetAndPrepareAcceptanceFixture(publishingKey) {
   execFileSync(process.execPath, [supabaseCli, "db", "reset"], { cwd: root, stdio: "ignore" });
   const env = localEnv();
   const service = createClient(env.API_URL, env.SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data: existingUsers, error: listUsersError } = await service.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  if (listUsersError) throw new Error("기존 로컬 가상 계정을 확인하지 못했습니다.");
+  for (const user of existingUsers.users) {
+    if (user.email && Object.values(acceptanceAccounts).some((account) => account.email === user.email)) {
+      const { error } = await service.auth.admin.deleteUser(user.id);
+      if (error) throw new Error("기존 로컬 가상 계정을 정리하지 못했습니다.");
+    }
+  }
   const ids = { agency: "22000000-0000-4000-8000-000000000001", advertiserOrg: "22000000-0000-4000-8000-000000000002", otherAgency: "22000000-0000-4000-8000-000000000003", otherAdvertiser: "22000000-0000-4000-8000-000000000004", lumi: "32000000-0000-4000-8000-000000000001", bridge: "32000000-0000-4000-8000-000000000002", paw: "32000000-0000-4000-8000-000000000003" };
   const users = {};
   for (const [role, account] of Object.entries(acceptanceAccounts)) {

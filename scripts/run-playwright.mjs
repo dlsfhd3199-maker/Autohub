@@ -13,6 +13,14 @@ const local = Object.fromEntries(status.split(/\r?\n/).flatMap((line) => {
 if (!local.API_URL || !local.PUBLISHABLE_KEY) throw new Error("Local Supabase must be running before Playwright tests");
 if (local.API_URL !== "http://127.0.0.1:54321") throw new Error("E2E database reset is restricted to loopback local Supabase");
 execFileSync(process.execPath, [supabaseCli, "db", "reset"], { stdio: "inherit" });
+for (let attempt = 0; attempt < 60; attempt += 1) {
+  try {
+    const response = await fetch(`${local.API_URL}/auth/v1/health`, { cache: "no-store", signal: AbortSignal.timeout(2_000) });
+    if (response.ok) break;
+  } catch { /* wait for GoTrue to recover after the database reset */ }
+  if (attempt === 59) throw new Error("Local Supabase Auth did not become healthy after reset");
+  await new Promise((resolve) => setTimeout(resolve, 500));
+}
 const env = {
   ...process.env,
   NEXT_PUBLIC_SUPABASE_URL: local.API_URL,

@@ -5,12 +5,13 @@ export type ApprovedEvidence = { id: string; title: string; officialUrl: string;
 
 export async function getApprovedGenerationContext(brandId: string) {
   const { supabase } = await requireBrandPermission(brandId, "edit");
-  const [factsResult, productsResult, manualResult] = await Promise.all([
+  const [factsResult, productsResult, manualResult, profileResult] = await Promise.all([
     supabase.from("brand_knowledge_facts").select("id,source_document_id,source_url,fact_key,fact_value,fact_hash,risk_level,status,reviewed_by_role,reviewed_at,advertiser_reviewed_at").eq("brand_id", brandId).eq("status", "approved").order("created_at", { ascending: false }),
     supabase.from("brand_products").select("id,source_document_id,product_key,name,official_url,description,price,currency,inventory_status,rating,review_count,image_url,image_alt,product_hash,field_review_status,status,reviewed_by_role,reviewed_at,advertiser_reviewed_at,created_at").eq("brand_id", brandId).order("created_at", { ascending: false }),
     supabase.from("evidence_sources").select("id,title,official_url,evidence_text,content_hash,is_active,updated_at").eq("brand_id", brandId).eq("is_active", true),
+    supabase.from("brand_knowledge_profiles").select("product_info").eq("brand_id", brandId).maybeSingle(),
   ]);
-  const error = factsResult.error ?? productsResult.error ?? manualResult.error;
+  const error = factsResult.error ?? productsResult.error ?? manualResult.error ?? profileResult.error;
   if (error) throw new Error("승인된 생성 근거를 불러오지 못했습니다.");
   const omittedHighRisk: string[] = [];
   const facts: ApprovedEvidence[] = (factsResult.data ?? []).flatMap((fact) => {
@@ -27,7 +28,8 @@ export async function getApprovedGenerationContext(brandId: string) {
     return [{ ...fields, snapshotId: product.id, sourceDocumentId: product.source_document_id, sourceUrl: product.official_url, contentHash: product.product_hash, approvedByRole: product.reviewed_by_role ?? "unknown", approvedAt: product.reviewed_at }];
   });
   const manual: ApprovedEvidence[] = (manualResult.data ?? []).map((item) => ({ id: item.id, title: item.title, officialUrl: item.official_url, evidenceText: item.evidence_text, sourceUrl: item.official_url, contentHash: item.content_hash, approvedByRole: "agency_admin", approvedAt: item.updated_at }));
-  return { evidence: [...manual, ...facts], products, omittedHighRisk };
+  const manuallyApprovedProducts = Array.isArray(profileResult.data?.product_info) ? profileResult.data.product_info.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object") : [];
+  return { evidence: [...manual, ...facts], products: [...products, ...manuallyApprovedProducts], omittedHighRisk };
 }
 
 export function recommendContentIdeas(evidence: ApprovedEvidence[], products: Array<Record<string, unknown>>) {

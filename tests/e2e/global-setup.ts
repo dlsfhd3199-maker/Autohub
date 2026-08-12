@@ -7,19 +7,31 @@ export const e2eAccounts = {
   advertiser: { email: "cp3-advertiser@example.com", password: "Virtual-Test-Only-42!" },
 };
 
+async function retryAuth<T>(operation: () => Promise<T>): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try { return await operation(); } catch (error) {
+      lastError = error;
+      if (!(error instanceof Error) || !error.name.includes("Retryable")) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+    }
+  }
+  throw lastError;
+}
+
 export default async function setup() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error("Local Supabase must be running for checkpoint 3 E2E tests");
   const admin = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data: existing } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const { data: existing } = await retryAuth(() => admin.auth.admin.listUsers({ page: 1, perPage: 1000 }));
   const created: Record<keyof typeof e2eAccounts, string> = { admin: "", ae: "", advertiser: "" };
   for (const [keyName, account] of Object.entries(e2eAccounts) as [keyof typeof e2eAccounts, (typeof e2eAccounts)[keyof typeof e2eAccounts]][]) {
     const old = existing.users.find((user) => user.email === account.email);
     const attributes = { password: account.password, email_confirm: true, user_metadata: { display_name: keyName === "admin" ? "가상 관리자" : keyName === "advertiser" ? "가상 광고주 담당자" : "담당자 A" } };
-    const { data, error } = old
-      ? await admin.auth.admin.updateUserById(old.id, attributes)
-      : await admin.auth.admin.createUser({ email: account.email, ...attributes });
+    const { data, error } = await retryAuth(() => old
+      ? admin.auth.admin.updateUserById(old.id, attributes)
+      : admin.auth.admin.createUser({ email: account.email, ...attributes }));
     if (error || !data.user) throw error ?? new Error("Failed to create virtual E2E user");
     created[keyName] = data.user.id;
   }
