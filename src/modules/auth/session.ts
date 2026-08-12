@@ -8,6 +8,8 @@ export async function requireAuthenticatedUser() {
 
   if (error || !data?.claims?.sub) redirect("/login");
 
+  const { data: account, error: accountError } = await supabase.from("user_account_statuses").select("status").eq("user_id", data.claims.sub).maybeSingle();
+  if (accountError || account?.status !== "approved") redirect(`/account-status?status=${account?.status ?? "pending"}`);
   return {
     userId: data.claims.sub,
     supabase,

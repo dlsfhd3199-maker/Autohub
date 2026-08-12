@@ -51,6 +51,12 @@ export async function resetAndPrepareAcceptanceFixture(publishingKey) {
     if (error || !data.user) throw new Error("가상 인수 계정을 구성하지 못했습니다.");
     users[role] = data.user.id;
   }
+  const { error: accountStatusError } = await service.from("user_account_statuses").upsert(
+    Object.values(users).map((userId) => ({ user_id: userId, status: "approved" })),
+    { onConflict: "user_id" },
+  );
+  if (accountStatusError) throw new Error(`계정 승인 상태 fixture 구성에 실패했습니다. 오류 코드: ${accountStatusError.code ?? "unknown"}`);
+
   const check = async (promise, label) => { const { error } = await promise; if (error) throw new Error(`${label} fixture 구성에 실패했습니다. 오류 코드: ${error.code ?? "unknown"}`); };
   await check(service.from("organizations").insert([{ id: ids.agency, name: "Virtual Agency", type: "agency" }, { id: ids.advertiserOrg, name: "Virtual Advertiser", type: "advertiser" }, { id: ids.otherAgency, name: "Virtual Other Agency", type: "agency" }, { id: ids.otherAdvertiser, name: "Virtual Other Advertiser", type: "advertiser" }]), "조직");
   await check(service.from("organization_memberships").insert([{ user_id: users.admin, organization_id: ids.agency, role: "agency_admin" }, { user_id: users.ae, organization_id: ids.agency, role: "ae" }, { user_id: users.advertiser, organization_id: ids.advertiserOrg, role: "advertiser" }]), "권한");

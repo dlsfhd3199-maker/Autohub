@@ -11,7 +11,7 @@ const safeFailure = (error: unknown): SiteActionState => ({ ok: false, message: 
 export async function registerLocalSiteSource(_state: SiteActionState, formData: FormData): Promise<SiteActionState> {
   try {
     const input = siteSourceInputSchema.parse({ brandId: formData.get("brandId"), baseUrl: formData.get("baseUrl"), isPrimary: formData.get("isPrimary") === "true" });
-    const { supabase, userId } = await requireBrandPermission(input.brandId, "manage");
+    const { supabase, userId } = await requireBrandPermission(input.brandId, "configure");
     if (process.env.NODE_ENV === "production" || process.env.CRAWLER_LOCAL_TEST_ENABLED !== "true") return { ok: false, message: "로컬 테스트 수집 기능이 비활성화되어 있습니다." };
     if (input.isPrimary) await supabase.from("brand_site_sources").update({ is_primary: false, updated_by: userId }).eq("brand_id", input.brandId);
     const { error } = await supabase.from("brand_site_sources").insert({ brand_id: input.brandId, base_url: input.baseUrl, allowed_domains: ["127.0.0.1"], platform_type: "local-test-store", is_primary: input.isPrimary, status: "ready", verification_status: "verified", verification_method: "local-test-exception", verified_at: new Date().toISOString(), verified_by: userId, created_by: userId, updated_by: userId });

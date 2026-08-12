@@ -35,6 +35,8 @@ export default async function setup() {
     if (error || !data.user) throw error ?? new Error("Failed to create virtual E2E user");
     created[keyName] = data.user.id;
   }
+  const { error: accountStatusError } = await admin.from("user_account_statuses").upsert(Object.values(created).map((user_id) => ({ user_id, status: "approved" })), { onConflict: "user_id" });
+  if (accountStatusError) throw accountStatusError;
   const agencyId = "22000000-0000-4000-8000-000000000001";
   const advertiserId = "22000000-0000-4000-8000-000000000002";
   const otherAgencyId = "22000000-0000-4000-8000-000000000003";
